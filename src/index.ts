@@ -1,25 +1,25 @@
 import { Db } from "./Db";
 import { z } from "zod";
+import { users } from "./Mocks";
 
 const UserSchema = z.object({
   name: z.string(),
   age: z.number().int().min(18, { message: "Min. must be 18" }),
   email: z.string().email({ message: "Should be a valid e-mail" }),
+  type: z.string(), //admin ou common
 });
 
 const client = new Db();
 
 client.CreateATable("users", UserSchema);
+users.forEach((user) => client.tables.users.insert(user));
 
-client.tables.users.insert({
-  age: 18,
-  name: "Vini",
-  email: "test@email.com",
-});
+client.tables.users.insert(users[0]);
 
 const t = client.tables.users.findUnique({
   where: {
-    name: "Vini",
+    age: 30,
+    type: "common",
   },
 });
 
