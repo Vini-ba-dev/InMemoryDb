@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-class Table<T extends object> {
+export class Table<T extends object> {
   private schema: z.ZodObject<any>;
   table: any[];
 
