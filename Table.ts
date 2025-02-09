@@ -16,4 +16,17 @@ class Table<T extends object> {
       console.error(error);
     }
   }
+  findUnique(data: { where: Partial<T> }): T[] {
+    const queryParamenters = data.where;
+
+    let queryresult: T[] = [];
+
+    this.table.filter((line) => {
+      for (const [key, value] of Object.entries(queryParamenters)) {
+        if (line[key] == value) queryresult.push(line);
+      }
+    });
+
+    return queryresult;
+  }
 }
