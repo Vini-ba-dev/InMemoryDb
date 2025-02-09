@@ -20,15 +20,17 @@ export class Table<T extends object> {
   }
   findUnique(data: { where: Partial<T> }): T[] {
     const queryParamenters = data.where;
+    const keys = Object.keys(queryParamenters);
+    const values = Object.values(queryParamenters);
 
-    let queryresult: T[] = [];
-
-    this.table.filter((line) => {
-      for (const [key, value] of Object.entries(queryParamenters)) {
-        if (line[key] == value) queryresult.push(line);
+    const queryResult = this.table.filter((line) => {
+      for (let key = 0; key < keys.length; key++) {
+        if (line[keys[key]] != values[key]) {
+          return false;
+        }
       }
+      return true;
     });
-
-    return queryresult;
+    return queryResult;
   }
 }
