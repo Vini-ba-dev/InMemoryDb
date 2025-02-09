@@ -8,4 +8,12 @@ class Table<T extends object> {
     this.schema = schema;
     this.table = [];
   }
+  insert(data: T): void {
+    try {
+      const parsedData = this.schema.parse(data);
+      this.table.push(parsedData);
+    } catch (error) {
+      console.error(error);
+    }
+  }
 }
