@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { formatZodError } from "./ErrorHandling";
 
 export class Table<T extends object> {
   private schema: z.ZodObject<any>;
@@ -8,12 +9,13 @@ export class Table<T extends object> {
     this.schema = schema;
     this.table = [];
   }
+
   insert(data: T): void {
     try {
       const parsedData = this.schema.parse(data);
       this.table.push(parsedData);
-    } catch (error) {
-      console.error(error);
+    } catch (error: any) {
+      console.error(formatZodError(error));
     }
   }
   findUnique(data: { where: Partial<T> }): T[] {
