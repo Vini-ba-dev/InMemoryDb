@@ -3,6 +3,7 @@ import { z } from "zod";
 import { users } from "./Mocks";
 
 const UserSchema = z.object({
+  id: z.number().int(),
   name: z.string(),
   age: z.number().int().min(18, { message: "Min. must be 18" }),
   email: z.string().email({ message: "Should be a valid e-mail" }),
@@ -32,5 +33,8 @@ const t2 = client.tables.users.findFirst({
 });
 
 const t3 = client.tables.users.update({
+  where: {
+    age: 30,
+  },
   data: {},
 });
