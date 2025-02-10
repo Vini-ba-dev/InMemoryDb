@@ -1,14 +1,16 @@
 import { Db } from "./Db";
 import { z } from "zod";
 import { users } from "./Mocks";
-import { Modifier } from "./types";
 
 const UserSchema = z.object({
   id: z.number().int(),
-  name: z.string(),
+  name: z.string().min(2),
   age: z.number().int().min(18, { message: "Min. must be 18" }),
   email: z.string().email({ message: "Should be a valid e-mail" }),
-  type: z.string(), //admin ou common
+  type: z.enum(["admin", "common"]),
+  country: z.string().min(2),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
 });
 
 const client = new Db();
@@ -62,11 +64,12 @@ client.tables.users.create(users[0]);
 
 // console.log(t5);
 
-const t6 = client.tables.users.where2({
+const t6 = client.tables.users.findMany({
   where: [
     {
       field: "age",
-      value: 30,
+      value: 25,
+      modifier: "exclude",
     },
     // {
     //   field: "name",

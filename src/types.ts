@@ -11,6 +11,14 @@ export type Query = {
   ];
 };
 
+export type GroupBy = {
+  by: string;
+  where: [
+    { field: string | number; value: string | number; modifier?: Modifier }
+  ];
+  type: string;
+};
+
 const query: Query = {
   where: [
     {

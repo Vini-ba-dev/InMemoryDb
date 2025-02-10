@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ErrorHandling } from "./ErrorHandling";
-import { Query, Modifier } from "./types";
+import { Query, Modifier, GroupBy } from "./types";
 
 export class Table<T extends object> {
   private schema: z.ZodObject<any>;
@@ -72,7 +72,7 @@ export class Table<T extends object> {
             case Modifier.has:
               return String(line[key.field]).includes(String(value));
             case Modifier.exclude:
-              return line[key.field] != queryParamenters[i].value;
+              return !String(line[key.field]).includes(String(value));
           }
         if (line[key.field] == queryParamenters[i].value) {
           return true;
@@ -146,4 +146,5 @@ export class Table<T extends object> {
       console.error(error);
     }
   }
+  goupBy(data: GroupBy) {}
 }
