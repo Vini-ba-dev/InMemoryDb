@@ -152,7 +152,6 @@ export class Table<T extends object> {
     /***
      * Original code from: Hannah
      * at: https://dev.to/ketoaustin/sql-group-by-using-javascript-34og
-     *
      */
 
     //@ts-ignore
@@ -164,11 +163,7 @@ export class Table<T extends object> {
             //@ts-ignore
             const values = properties.map((x) => object[x] || null);
 
-            const key = JSON.stringify(
-              //@ts-ignore
-              // properties.map((x) => object[x] || null)
-              values
-            );
+            const key = JSON.stringify(values);
             if (!accumulator[key]) {
               accumulator[key] = {
                 target: 0,
