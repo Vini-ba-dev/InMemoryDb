@@ -1,7 +1,6 @@
 import { z } from "zod";
 import { ErrorHandling } from "./ErrorHandling";
 import { Query, Modifier } from "./types";
-import { resourceUsage } from "process";
 
 export class Table<T extends object> {
   private schema: z.ZodObject<any>;
