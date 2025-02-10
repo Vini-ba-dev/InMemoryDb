@@ -28,7 +28,7 @@ export class Table<T extends object> {
       console.error(formatZodError(error));
     }
   }
-  findUnique(data: { where: Partial<T> }): T[] {
+  findMany(data: { where: Partial<T> }): T[] {
     const queryParamenters = data.where;
     const keys = Object.keys(queryParamenters);
     const values = Object.values(queryParamenters);
