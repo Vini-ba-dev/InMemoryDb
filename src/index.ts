@@ -32,9 +32,14 @@ const t2 = client.tables.users.findFirst({
   },
 });
 
+console.log(client.tables.users.table[0]);
+
 const t3 = client.tables.users.update({
   where: {
-    age: 30,
+    id: 1,
+    age: 26,
   },
-  data: {},
+  data: { age: 26, type: "common" },
 });
+
+console.log(client.tables.users.table[0]);
