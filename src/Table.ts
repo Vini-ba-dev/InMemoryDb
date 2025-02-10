@@ -33,4 +33,14 @@ export class Table<T extends object> {
     });
     return queryResult;
   }
+  createMany(data: T[]) {
+    try {
+      data.forEach((n) => {
+        const parsedData = this.schema.parse(n);
+        this.table.push(parsedData);
+      });
+    } catch (error: any) {
+      console.error(formatZodError(error));
+    }
+  }
 }

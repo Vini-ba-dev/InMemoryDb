@@ -15,6 +15,7 @@ client.CreateATable("users", UserSchema);
 users.forEach((user) => client.tables.users.insert(user));
 
 client.tables.users.insert(users[0]);
+client.tables.users.createMany([users[3], users[0]]);
 
 const t = client.tables.users.findUnique({
   where: {
@@ -22,5 +23,3 @@ const t = client.tables.users.findUnique({
     type: "common",
   },
 });
-
-console.log(t);
