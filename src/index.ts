@@ -30,3 +30,7 @@ const t2 = client.tables.users.findFirst({
     type: "common",
   },
 });
+
+const t3 = client.tables.users.update({
+  data: {},
+});

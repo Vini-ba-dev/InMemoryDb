@@ -1,18 +1,17 @@
-import { ZodError, ZodIssue } from "zod";
-const formatZodIssue = (issue: ZodIssue): string => {
-  const { path, message } = issue;
-  const pathString = path.join(".");
+import { z } from "zod";
 
-  return `${pathString}: ${message}`;
-};
-
-// Format the Zod error message with only the current error
-export const formatZodError = (error: ZodError): string | undefined => {
-  const { issues } = error;
-
-  if (issues.length) {
-    const currentIssue = issues[0];
-
-    return formatZodIssue(currentIssue);
+export const ErrorHandling = (
+  method: string,
+  agr: string,
+  obj: Partial<z.ZodObject<any>>,
+  schema: z.ZodObject<any>
+) => {
+  const test = schema.safeParse(obj);
+  if (!test.success) {
+    throw new Error(`
+        Method: ${method} has an error
+        At: ${agr}
+        From Zod: ${test.error.message}
+        `);
   }
 };

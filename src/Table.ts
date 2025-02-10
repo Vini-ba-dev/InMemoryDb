@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { formatZodError } from "./ErrorHandling";
+import { ErrorHandling } from "./ErrorHandling";
 
 export class Table<T extends object> {
   private schema: z.ZodObject<any>;
@@ -12,50 +12,86 @@ export class Table<T extends object> {
 
   create(data: T): void {
     try {
-      const parsedData = this.schema.parse(data);
-      this.table.push(parsedData);
+      ErrorHandling("create", "data", data, this.schema);
+
+      this.table.push(data);
     } catch (error: any) {
-      console.error(formatZodError(error));
+      console.error(error);
     }
   }
   createMany(data: T[]) {
     try {
       data.forEach((n) => {
-        const parsedData = this.schema.parse(n);
-        this.table.push(parsedData);
+        ErrorHandling("createMany", "data", n, this.schema);
+
+        this.table.push(n);
       });
     } catch (error: any) {
-      console.error(formatZodError(error));
+      console.error(error);
     }
   }
-  findMany(data: { where: Partial<T> }): T[] {
-    const queryParamenters = data.where;
-    const keys = Object.keys(queryParamenters);
-    const values = Object.values(queryParamenters);
+  findMany(data: { where: Partial<T> }): T[] | undefined {
+    const partialUserSchema = this.schema.partial();
+    try {
+      ErrorHandling("findMany", "where", data.where, partialUserSchema);
 
-    const queryResult = this.table.filter((line) => {
-      for (let key = 0; key < keys.length; key++) {
-        if (line[keys[key]] != values[key]) {
-          return false;
+      const queryParamenters = data.where;
+      const keys = Object.keys(queryParamenters);
+      const values = Object.values(queryParamenters);
+
+      const queryResult = this.table.filter((line) => {
+        for (let key = 0; key < keys.length; key++) {
+          if (line[keys[key]] != values[key]) {
+            return false;
+          }
         }
-      }
-      return true;
-    });
-    return queryResult;
+        return true;
+      });
+
+      return queryResult;
+    } catch (error: any) {
+      console.error(error);
+    }
   }
-  findFirst(data: { where: Partial<T> }): T {
-    const queryParamenters = data.where;
-    const keys = Object.keys(queryParamenters);
-    const values = Object.values(queryParamenters);
+  findFirst(data: { where: Partial<T> }): T | undefined {
+    const partialUserSchema = this.schema.partial();
+    try {
+      ErrorHandling("findFirst", "where", data.where, partialUserSchema);
+      const queryParamenters = data.where;
+      const keys = Object.keys(queryParamenters);
+      const values = Object.values(queryParamenters);
 
-    const queryResult = this.table.find((line) => {
-      for (let key = 0; key < keys.length; key++) {
-        if (line[keys[key]] != values[key]) {
-          return false;
+      const queryResult = this.table.find((line) => {
+        for (let key = 0; key < keys.length; key++) {
+          if (line[keys[key]] != values[key]) {
+            return false;
+          }
         }
-      }
-      return true;
-    });
-    return queryResult;
+        return true;
+      });
+      return queryResult;
+    } catch (error: any) {
+      console.error(error);
+    }
+  }
+  update(data: { where: Partial<T>; data: Partial<T> }) {
+    const partialUserSchema = this.schema.partial();
+
+    try {
+      ErrorHandling("update", "where", data.where, partialUserSchema);
+      ErrorHandling("update", "data", data.data, partialUserSchema);
+      // partialUserSchema.parse(data.where);
+
+      // const test = partialUserSchema.safeParse(data.data);
+
+      // const queryParamenters = data.where;
+
+      // const key = Object.keys(queryParamenters);
+      // const value = Object.values(queryParamenters);
+
+      // const index = this.table.findIndex((n) => n.key == value);
+    } catch (error: any) {
+      console.error(error);
+    }
   }
 }
