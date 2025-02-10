@@ -1,5 +1,7 @@
 import { z } from "zod";
 import { ErrorHandling } from "./ErrorHandling";
+import { Query, Modifier } from "./types";
+import { resourceUsage } from "process";
 
 export class Table<T extends object> {
   private schema: z.ZodObject<any>;
@@ -30,29 +32,7 @@ export class Table<T extends object> {
       console.error(error);
     }
   }
-  findMany(data: { where: Partial<T> }): T[] | undefined {
-    const partialUserSchema = this.schema.partial();
-    try {
-      ErrorHandling("findMany", "where", data.where, partialUserSchema);
 
-      const queryParamenters = data.where;
-      const keys = Object.keys(queryParamenters);
-      const values = Object.values(queryParamenters);
-
-      const queryResult = this.table.filter((line) => {
-        for (let key = 0; key < keys.length; key++) {
-          if (line[keys[key]] != values[key]) {
-            return false;
-          }
-        }
-        return true;
-      });
-
-      return queryResult;
-    } catch (error: any) {
-      console.error(error);
-    }
-  }
   findFirst(data: { where: Partial<T> }): T | undefined {
     const partialUserSchema = this.schema.partial();
     try {
@@ -73,6 +53,40 @@ export class Table<T extends object> {
     } catch (error: any) {
       console.error(error);
     }
+  }
+  findMany(data: Query): any {
+    const queryParamenters = data.where;
+
+    const queryResult = this.table.filter((line) => {
+      //For each param, test if
+      //has a modifier and if it checks if search
+      const testForEachParam = queryParamenters.map((key, i) => {
+        const value = queryParamenters[i].value;
+        const modifier = queryParamenters[i].modifier;
+
+        if (modifier != undefined)
+          switch (modifier) {
+            case Modifier.start:
+              return String(line[key.field]).startsWith(String(value));
+            case Modifier.end:
+              return String(line[key.field]).endsWith(String(value));
+            case Modifier.has:
+              return String(line[key.field]).includes(String(value));
+            case Modifier.exclude:
+              return line[key.field] != queryParamenters[i].value;
+          }
+        if (line[key.field] == queryParamenters[i].value) {
+          return true;
+        } else {
+          return false;
+        }
+      });
+
+      //return final result for filter method,
+      //by check all tests in an array of responses
+      return testForEachParam.every((filedlReturn) => filedlReturn == true);
+    });
+    return queryResult;
   }
   update(data: { where: Partial<T>; data: Partial<T> }) {
     const partialUserSchema = this.schema.partial();
