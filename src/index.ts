@@ -12,7 +12,7 @@ const UserSchema = z.object({
 const client = new Db();
 
 client.CreateATable("users", UserSchema);
-users.forEach((user) => client.tables.users.insert(user));
+users.forEach((user) => client.tables.users.create(user));
 
 client.tables.users.insert(users[0]);
 client.tables.users.createMany([users[3], users[0]]);

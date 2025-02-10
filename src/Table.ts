@@ -10,10 +10,20 @@ export class Table<T extends object> {
     this.table = [];
   }
 
-  insert(data: T): void {
+  create(data: T): void {
     try {
       const parsedData = this.schema.parse(data);
       this.table.push(parsedData);
+    } catch (error: any) {
+      console.error(formatZodError(error));
+    }
+  }
+  createMany(data: T[]) {
+    try {
+      data.forEach((n) => {
+        const parsedData = this.schema.parse(n);
+        this.table.push(parsedData);
+      });
     } catch (error: any) {
       console.error(formatZodError(error));
     }
@@ -32,15 +42,5 @@ export class Table<T extends object> {
       return true;
     });
     return queryResult;
-  }
-  createMany(data: T[]) {
-    try {
-      data.forEach((n) => {
-        const parsedData = this.schema.parse(n);
-        this.table.push(parsedData);
-      });
-    } catch (error: any) {
-      console.error(formatZodError(error));
-    }
   }
 }
