@@ -104,4 +104,33 @@ export class Table<T extends object> {
       console.error(error);
     }
   }
+
+  updateMany(data: { where: Partial<T>; data: Partial<T> }) {
+    const partialUserSchema = this.schema.partial();
+
+    try {
+      ErrorHandling("updateMany", "where", data.where, partialUserSchema);
+      ErrorHandling("updateMany", "data", data.data, partialUserSchema);
+
+      const queryParamenters = data.where;
+
+      const keys = Object.keys(queryParamenters);
+      const values = Object.values(queryParamenters);
+
+      const valuesParamenters = data.data;
+
+      const updateKeys = Object.keys(valuesParamenters);
+      const updatsValues = Object.values(valuesParamenters);
+
+      for (let index = 0; index < this.table.length; index++) {
+        if (this.table[index][keys[0]] == values[0]) {
+          updateKeys.forEach((n, i) => {
+            this.table[index][n] = updatsValues[i];
+          });
+        }
+      }
+    } catch (error: any) {
+      console.error(error);
+    }
+  }
 }

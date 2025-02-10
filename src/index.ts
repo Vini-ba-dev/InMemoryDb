@@ -32,14 +32,23 @@ const t2 = client.tables.users.findFirst({
   },
 });
 
-console.log(client.tables.users.table[0]);
+// console.log(client.tables.users.table[0]);
 
-const t3 = client.tables.users.update({
+// const t3 = client.tables.users.update({
+//   where: {
+//     id: 1,
+//     age: 26,
+//   },
+//   data: { age: 26, type: "common" },
+// });
+
+// console.log(client.tables.users.table[0]);
+console.log(client.tables.users.table[2]);
+const t4 = client.tables.users.updateMany({
   where: {
-    id: 1,
-    age: 26,
+    type: "admin",
   },
   data: { age: 26, type: "common" },
 });
 
-console.log(client.tables.users.table[0]);
+console.log(client.tables.users.table[2]);
