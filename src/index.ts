@@ -64,24 +64,43 @@ client.tables.users.create(users[0]);
 
 // console.log(t5);
 
-const t6 = client.tables.users.findMany({
+// const t6 = client.tables.users.findMany({
+//   where: [
+//     {
+//       field: "age",
+//       value: 25,
+//       modifier: "exclude",
+//     },
+//     // {
+//     //   field: "name",
+//     //   value: "Bob",
+//     //   modifier: "start",
+//     // },
+//     {
+//       field: "email",
+//       value: "example",
+//       modifier: "has",
+//     },
+//   ],
+// });
+
+// console.log(t6);
+
+const t6 = client.tables.users.sumBy({
+  by: ["country", "age"],
   where: [
     {
       field: "age",
       value: 25,
       modifier: "exclude",
     },
-    // {
-    //   field: "name",
-    //   value: "Bob",
-    //   modifier: "start",
-    // },
     {
       field: "email",
       value: "example",
       modifier: "has",
     },
   ],
+  target: "subscriptionPrice",
 });
 
 console.log(t6);

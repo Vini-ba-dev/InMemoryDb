@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { ErrorHandling } from "./ErrorHandling";
 import { Query, Modifier, GroupBy } from "./types";
+import { run } from "node:test";
 
 export class Table<T extends object> {
   private schema: z.ZodObject<any>;
@@ -53,7 +54,7 @@ export class Table<T extends object> {
       console.error(error);
     }
   }
-  findMany(data: Query): any {
+  findMany(data: Query): T[] {
     const queryParamenters = data.where;
 
     const queryResult = this.table.filter((line) => {
@@ -146,5 +147,48 @@ export class Table<T extends object> {
       console.error(error);
     }
   }
-  goupBy(data: GroupBy) {}
+  sumBy(data: GroupBy) {
+    const filtered = this.findMany(data);
+    /***
+     * Original code from: Hannah
+     * at: https://dev.to/ketoaustin/sql-group-by-using-javascript-34og
+     *
+     */
+
+    //@ts-ignore
+    const groupBy = (objectArray, properties, target) => {
+      return [
+        ...Object.values(
+          //@ts-ignore
+          objectArray.reduce((accumulator, object) => {
+            //@ts-ignore
+            const values = properties.map((x) => object[x] || null);
+
+            const key = JSON.stringify(
+              //@ts-ignore
+              // properties.map((x) => object[x] || null)
+              values
+            );
+            if (!accumulator[key]) {
+              accumulator[key] = {
+                target: 0,
+              };
+
+              properties.forEach(
+                //@ts-ignore
+                (agg, index) => (accumulator[key][agg] = values[index])
+              );
+            }
+
+            accumulator[key].target = accumulator[key].target + object[target];
+
+            return accumulator;
+          }, {})
+        ),
+      ];
+    };
+    const result = groupBy(filtered, data.by, data.target);
+
+    return result;
+  }
 }
