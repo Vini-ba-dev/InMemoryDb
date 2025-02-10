@@ -80,16 +80,26 @@ export class Table<T extends object> {
     try {
       ErrorHandling("update", "where", data.where, partialUserSchema);
       ErrorHandling("update", "data", data.data, partialUserSchema);
-      // partialUserSchema.parse(data.where);
 
-      // const test = partialUserSchema.safeParse(data.data);
+      const queryParamenters = data.where;
 
-      // const queryParamenters = data.where;
+      const keys = Object.keys(queryParamenters);
+      const values = Object.values(queryParamenters);
 
-      // const key = Object.keys(queryParamenters);
-      // const value = Object.values(queryParamenters);
+      const index = this.table.findIndex((n) => n[keys[0]] == values[0]);
 
-      // const index = this.table.findIndex((n) => n.key == value);
+      if (index == -1) {
+        throw new Error("Query not found results");
+      }
+
+      const valuesParamenters = data.data;
+
+      const updateKeys = Object.keys(valuesParamenters);
+      const updatsValues = Object.values(valuesParamenters);
+
+      updateKeys.forEach((n, i) => {
+        this.table[index][n] = updatsValues[i];
+      });
     } catch (error: any) {
       console.error(error);
     }
