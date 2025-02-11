@@ -39,7 +39,7 @@ export class Model<T extends object> {
       const keys = Object.keys(queryParamenters);
       const values = Object.values(queryParamenters);
 
-      const queryResult = this.table.find((line) => {
+      const queryResult = this.table.find((line: any) => {
         for (let key = 0; key < keys.length; key++) {
           if (line[keys[key]] != values[key]) {
             return false;
@@ -55,7 +55,7 @@ export class Model<T extends object> {
   findMany(data: Query): T[] {
     const queryParamenters = data.where;
 
-    const queryResult = this.table.filter((line) => {
+    const queryResult = this.table.filter((line: any) => {
       //For each param, test if
       //has a modifier and if it checks if search
       const testForEachParam = queryParamenters.map((key, i) => {
@@ -98,7 +98,7 @@ export class Model<T extends object> {
       const keys = Object.keys(queryParamenters);
       const values = Object.values(queryParamenters);
 
-      const index = this.table.findIndex((n) => n[keys[0]] == values[0]);
+      const index = this.table.findIndex((n: any) => n[keys[0]] == values[0]);
 
       if (index == -1) {
         throw new Error("Query not found results");
@@ -110,6 +110,7 @@ export class Model<T extends object> {
       const updatsValues = Object.values(valuesParamenters);
 
       updateKeys.forEach((n, i) => {
+        //@ts-ignore
         this.table[index][n] = updatsValues[i];
       });
     } catch (error: any) {
@@ -134,8 +135,10 @@ export class Model<T extends object> {
       const updatsValues = Object.values(valuesParamenters);
 
       for (let index = 0; index < this.table.length; index++) {
+        //@ts-ignore
         if (this.table[index][keys[0]] == values[0]) {
           updateKeys.forEach((n, i) => {
+            //@ts-ignore
             this.table[index][n] = updatsValues[i];
           });
         }
