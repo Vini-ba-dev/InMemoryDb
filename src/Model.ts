@@ -2,7 +2,7 @@ import { z } from "zod";
 import { ErrorHandling } from "./ErrorHandling";
 import { Query, Modifier, GroupBy } from "./types";
 
-export class Table<T extends object> {
+export class Model<T extends object> {
   private schema: z.ZodObject<any>;
   table: T[];
 

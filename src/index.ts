@@ -15,29 +15,29 @@ const UserSchema = z.object({
 
 const client = new Db();
 
-client.CreateATable("users", UserSchema);
-users.forEach((user) => client.tables.users.create(user));
+client.CreateModel("users", UserSchema);
+users.forEach((user) => client.model.users.create(user));
 
-client.tables.users.create(users[0]);
-// client.tables.users.createMany([users[3], users[0]]);
+client.model.users.create(users[0]);
+// client.model.users.createMany([users[3], users[0]]);
 
-// const t1 = client.tables.users.findMany({
+// const t1 = client.model.users.findMany({
 //   where: {
 //     age: 30,
 //     type: "common",
 //   },
 // });
 
-// const t2 = client.tables.users.findFirst({
+// const t2 = client.model.users.findFirst({
 //   where: {
 //     age: 30,
 //     type: "common",
 //   },
 // });
 
-// console.log(client.tables.users.table[0]);
+// console.log(client.model.users.table[0]);
 
-// const t3 = client.tables.users.update({
+// const t3 = client.model.users.update({
 //   where: {
 //     id: 1,
 //     age: 26,
@@ -45,18 +45,18 @@ client.tables.users.create(users[0]);
 //   data: { age: 26, type: "common" },
 // });
 
-// console.log(client.tables.users.table[0]);
-// console.log(client.tables.users.table[2]);
-// const t4 = client.tables.users.updateMany({
+// console.log(client.model.users.table[0]);
+// console.log(client.model.users.table[2]);
+// const t4 = client.model.users.updateMany({
 //   where: {
 //     type: "admin",
 //   },
 //   data: { age: 26, type: "common" },
 // });
 
-// console.log(client.tables.users.table[2]);
+// console.log(client.model.users.table[2]);
 
-// const t5 = client.tables.users.count({
+// const t5 = client.model.users.count({
 //   where: {
 //     type: "admin",
 //   },
@@ -64,7 +64,7 @@ client.tables.users.create(users[0]);
 
 // console.log(t5);
 
-// const t6 = client.tables.users.findMany({
+// const t6 = client.model.users.findMany({
 //   where: [
 //     {
 //       field: "age",
@@ -86,7 +86,7 @@ client.tables.users.create(users[0]);
 
 // console.log(t6);
 
-// const t6 = client.tables.users.groupBy({
+// const t6 = client.model.users.groupBy({
 //   by: ["country", "age"],
 //   where: [
 //     {

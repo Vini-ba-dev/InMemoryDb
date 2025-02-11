@@ -1,13 +1,13 @@
 import { z } from "zod";
-import { Table } from "./Table";
+import { Model } from "./Model";
 
 export class Db {
-  tables: any;
+  model: any;
   constructor() {
-    this.tables = {};
+    this.model = {};
   }
-  CreateATable(name: string, schema: z.ZodObject<any>) {
+  CreateModel(name: string, schema: z.ZodObject<any>) {
     type zt = z.infer<typeof schema>;
-    this.tables[name] = new Table<zt>(schema);
+    this.model[name] = new Model<zt>(schema);
   }
 }
