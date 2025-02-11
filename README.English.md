@@ -96,7 +96,7 @@ client.model.users.createMany(newUsers);
 Searches are query-based:
 
 ```tsx
-//Se nada for passado, o valor será tratato como igual (==)
+//If nothing is passed, the value will be treated as equal (==)
 export enum Modifier {
   end = "end",
   start = "start",
