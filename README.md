@@ -1,19 +1,22 @@
-# Micro banco de dados em memória
-
 O objetivo desse projeto é criar um micro banco de dados para ser usado em tempo de execução.
-MInha motivação é ter uma forma melhor de controlar minhas coleções em JS, tanto para leitura quando criação de objetos.
+Minha motivação é ter uma forma melhor de controlar minhas coleções em JS, tanto para leitura quando criação de objetos.
 
-O banco funciona como uma coleções de coleções. Chamaremos cada coleção de "model". Os nomes dos métodos vieram do Prisma ORM, e tentei me apróximar de sua estrutura de consulta.
+O banco funciona como uma coleção de coleções. Chamaremos cada coleção de "model". Os nomes dos métodos vieram do Prisma ORM, e tentei me aproximar de sua estrutura de consulta.
 
-=> No momento não há formas de criar IDs automaticos.
+<aside>
+💡
+
+ No momento não há formas de criar IDs automáticos.
+
+</aside>
 
 ---
 
 # Criando um schema
 
-Vamos precisa da lib do Zod para criar nossos schemas. Os schemas são usado para valídar novas criações na coleção.
+Vamos precisar da library do Zod para criar nossos schemas. Os schemas são usados para validar criações na coleção.
 
-```ts
+```tsx
 const UserSchema = z.object({
   id: z.number().int(),
   name: z.string().min(2),
@@ -24,22 +27,26 @@ const UserSchema = z.object({
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });
+
 ```
 
 Depois vamos importar Db, que é a class pai que cuida de deixar os models centralizados numa única instância.
 
-```ts
+```tsx
 const client = new Db();
 client.CreateModel("users", UserSchema);
+
 ```
+
+---
 
 ## Criações
 
-### client.model.users.create(user);
+### client.model.users.create(user)
 
-Cria um novo registro no banco, caso cumpra as valídações do Zod.
+Cria um novo registro no banco, caso cumpra as validações do Zod. Senão, lança um erro.
 
-```ts
+```tsx
 client.tables.users.create({
    {
     id: 1,
@@ -53,13 +60,14 @@ client.tables.users.create({
     updatedAt: "2024-02-05T15:30:00Z",
   }
 });
+
 ```
 
-### client.model.users.createMany([users]);
+### client.model.users.createMany([users])
 
-Cria um novos registros no banco, caso cumpra as valídações do Zod.
+Cria novos registros no banco, caso cumpra as validações do Zod. Senão, lança um erro.
 
-```ts
+```tsx
 const newUsers = [
   {
     id: 1,
@@ -86,6 +94,7 @@ const newUsers = [
 ];
 
 client.model.users.createMany(newUsers);
+
 ```
 
 ---
@@ -94,7 +103,7 @@ client.model.users.createMany(newUsers);
 
 As buscas são baseadas em query:
 
-```ts
+```tsx
 //Se nada for passado, o valor será tratato como igual (==)
 export enum Modifier {
   end = "end",
@@ -108,43 +117,46 @@ type Query = {
     { field: string | number; value: string | number; modifier?: Modifier }
   ];
 };
+
 ```
 
-### client.model.users.findFirst(query);
+### client.model.users.findFirst(query)
 
 Acha e retorna o primeiro objeto que corresponde a busca.
 
-```ts
+```tsx
 const user = client.model.users.findFirst({
   where: {
     age: 30,
     type: "common",
   },
 });
+
 ```
 
-### client.model.users.findMany(query);
+### client.model.users.findMany(query)
 
-Acha e retorna um array de todos objetos que correspondem a busca.
+Acha e retorna um array de todos os objetos que correspondem a busca.
 
-```ts
+```tsx
 const users = client.model.users.findMany({
   where: {
     age: 30,
     type: "common",
   },
 });
+
 ```
 
 ---
 
 ## Atualizações
 
-### client.model.users.update(query);
+### client.model.users.update(query)
 
-Atualiza o primeiro objeto que correspoder a query.
+Atualiza o primeiro objeto que corresponder a query.
 
-```ts
+```tsx
 client.model.users.update({
   where: {
     id: 1,
@@ -152,30 +164,32 @@ client.model.users.update({
   },
   data: { age: 26, type: "common" },
 });
+
 ```
 
-### client.model.users.updateMany(query);
+### client.model.users.updateMany(query)
 
-Atualiza o todos os objetos que correspoderem a query.
+Atualiza o todos os objetos que corresponderem a query.
 
-```ts
+```tsx
 client.model.users.updateMany({
   where: {
     type: "admin",
   },
   data: { type: "common" },
 });
+
 ```
 
 ---
 
 ## Agregação
 
-### client.model.users.groupBy(query);
+### client.model.users.groupBy(query)
 
-Retorna um array que é uma sumarização com os objetos que correspoderem a query.
+Retorna um array que é uma sumarização com os objetos que correspondem a query.
 
-```ts
+```tsx
 const group = client.model.users.groupBy({
   by: ["country", "age"],
   where: [
@@ -210,4 +224,5 @@ const group = client.model.users.groupBy({
     avg: 24.99,
   },
 ];
+
 ```
