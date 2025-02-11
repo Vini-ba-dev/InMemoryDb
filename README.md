@@ -3,12 +3,9 @@ Minha motivação é ter uma forma melhor de controlar minhas coleções em JS, 
 
 O banco funciona como uma coleção de coleções. Chamaremos cada coleção de "model". Os nomes dos métodos vieram do Prisma ORM, e tentei me aproximar de sua estrutura de consulta.
 
-<aside>
-💡
 
- No momento não há formas de criar IDs automáticos.
+> ⚠️ No momento não há formas de criar IDs automáticos.
 
-</aside>
 
 ---
 
