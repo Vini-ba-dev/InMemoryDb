@@ -1,11 +1,10 @@
 import { z } from "zod";
 import { ErrorHandling } from "./ErrorHandling";
 import { Query, Modifier, GroupBy } from "./types";
-import { run } from "node:test";
 
 export class Table<T extends object> {
   private schema: z.ZodObject<any>;
-  table: any[];
+  table: T[];
 
   constructor(schema: z.ZodObject<any>) {
     this.schema = schema;
@@ -32,7 +31,6 @@ export class Table<T extends object> {
       console.error(error);
     }
   }
-
   findFirst(data: { where: Partial<T> }): T | undefined {
     const partialUserSchema = this.schema.partial();
     try {
@@ -118,7 +116,6 @@ export class Table<T extends object> {
       console.error(error);
     }
   }
-
   updateMany(data: { where: Partial<T>; data: Partial<T> }) {
     const partialUserSchema = this.schema.partial();
 
@@ -147,7 +144,7 @@ export class Table<T extends object> {
       console.error(error);
     }
   }
-  sumBy(data: GroupBy) {
+  groupBy(data: GroupBy) {
     const filtered = this.findMany(data);
     /***
      * Original code from: Hannah
@@ -155,35 +152,47 @@ export class Table<T extends object> {
      */
 
     //@ts-ignore
-    const groupBy = (objectArray, properties, target) => {
-      return [
-        ...Object.values(
-          //@ts-ignore
-          objectArray.reduce((accumulator, object) => {
+    const grouping = (objectArray, properties, target, sumName) => {
+      //@ts-ignore
+      return objectArray.reduce((accumulator, object) => {
+        //@ts-ignore
+        const values = properties.map((x) => object[x] || null);
+
+        const key = JSON.stringify(values);
+        if (!accumulator.has(key)) {
+          accumulator.set(key, new Map());
+          accumulator.get(key).set(sumName, 0);
+          accumulator.get(key).set("Count", 0);
+
+          properties.forEach(
             //@ts-ignore
-            const values = properties.map((x) => object[x] || null);
+            (agg, index) => accumulator.get(key).set(agg, values[index])
+          );
+        }
 
-            const key = JSON.stringify(values);
-            if (!accumulator[key]) {
-              accumulator[key] = {
-                target: 0,
-              };
+        accumulator
+          .get(key)
+          .set(sumName, accumulator.get(key).get(sumName) + object[target]);
 
-              properties.forEach(
-                //@ts-ignore
-                (agg, index) => (accumulator[key][agg] = values[index])
-              );
-            }
+        accumulator
+          .get(key)
+          .set("Count", accumulator.get(key).get("Count") + 1);
 
-            accumulator[key].target = accumulator[key].target + object[target];
-
-            return accumulator;
-          }, {})
-        ),
-      ];
+        return accumulator;
+      }, new Map());
     };
-    const result = groupBy(filtered, data.by, data.target);
 
-    return result;
+    const sumName = "Sum_of_" + data.target;
+    const result = grouping(filtered, data.by, data.target, sumName);
+    const extractingValues = Array.from(result.values());
+
+    extractingValues.forEach((element: any) => {
+      element.set("avg", element.get(sumName) / element.get("Count"));
+    });
+
+    //Convert each element in an simple obj
+    return extractingValues.map((obj: any) =>
+      Object.fromEntries(obj.entries())
+    );
   }
 }
