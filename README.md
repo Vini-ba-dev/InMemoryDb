@@ -1,12 +1,17 @@
-# In Memory SQL Like Database
+# Micro banco de dados em memória
 
-I will use Prisma ORM to guide my methods and Zod to validate creations.
+O objetivo desse projeto é criar um micro banco de dados para ser usado em tempo de execução.
+MInha motivação é ter uma forma melhor de controlar minhas coleções em JS, tanto para leitura quando criação de objetos.
+
+O banco funciona como uma coleções de coleções. Chamaremos cada coleção de "model". Os nomes dos métodos vieram do Prisma ORM, e tentei me apróximar de sua estrutura de consulta.
+
+=> No momento não há formas de criar IDs automaticos.
 
 ---
 
-# Creating a table
+# Criando um schema
 
-First, you need to initialized a Zod schema:
+Vamos precisa da lib do Zod para criar nossos schemas. Os schemas são usado para valídar novas criações na coleção.
 
 ```ts
 const UserSchema = z.object({
@@ -21,29 +26,33 @@ const UserSchema = z.object({
 });
 ```
 
-Then import Db class:
+Depois vamos importar Db, que é a class pai que cuida de deixar os models centralizados numa única instância.
 
 ```ts
 const client = new Db();
-
-/**
- * Create a table method call a service class
- * that is our model it selfie.
- * Because we are store a collection of objs,
- * model is a better name
- */
 client.CreateModel("users", UserSchema);
 ```
 
-## Creation
+## Criações
 
-### `client.model.insert()`
+### client.model.users.create(user);
 
-Insert a new register in db.
+Cria um novo registro no banco, caso cumpra as valídações do Zod.
 
 ```ts
 client.tables.users.insert({
-  name: "John Doe",
-  email: "john@example.com",
+   {
+    id: 1,
+    name: "Alice",
+    age: 25,
+    email: "alice@example.com",
+    type: "admin",
+    country: "USA",
+    subscriptionPrice: 29.99,
+    createdAt: "2024-02-01T10:00:00Z",
+    updatedAt: "2024-02-05T15:30:00Z",
+  }
 });
 ```
+
+### client.model.users.createMany([users]);
