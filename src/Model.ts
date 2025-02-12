@@ -41,6 +41,44 @@ export class Model<T extends object> {
     }
     return testForEachParam.every((filedlReturn) => filedlReturn == true);
   }
+  private grouping(
+    objectArray: any,
+    properties: string[],
+    target: string,
+    sumName: string
+  ) {
+    /***
+     * Original code from: Hannah
+     * at: https://dev.to/ketoaustin/sql-group-by-using-javascript-34og
+     */
+
+    //@ts-ignore
+    return objectArray.reduce((accumulator, object) => {
+      //@ts-ignore
+      const values = properties.map((x) => object[x] || null);
+
+      const key = JSON.stringify(values);
+      if (!accumulator.has(key)) {
+        accumulator.set(key, new Map());
+        accumulator.get(key).set(sumName, 0);
+        accumulator.get(key).set("Count", 0);
+
+        properties.forEach(
+          //@ts-ignore
+          (agg, index) => accumulator.get(key).set(agg, values[index])
+        );
+      }
+
+      accumulator
+        .get(key)
+        .set(sumName, accumulator.get(key).get(sumName) + object[target]);
+
+      accumulator.get(key).set("Count", accumulator.get(key).get("Count") + 1);
+
+      return accumulator;
+    }, new Map());
+  }
+
   create(data: T): void {
     try {
       ErrorHandling("create", "data", data, this.schema);
@@ -135,44 +173,12 @@ export class Model<T extends object> {
   }
   groupBy(data: GroupBy) {
     const filtered = this.findMany(data.where);
-    /***
-     * Original code from: Hannah
-     * at: https://dev.to/ketoaustin/sql-group-by-using-javascript-34og
-     */
-
-    //@ts-ignore
-    const grouping = (objectArray, properties, target, sumName) => {
-      //@ts-ignore
-      return objectArray.reduce((accumulator, object) => {
-        //@ts-ignore
-        const values = properties.map((x) => object[x] || null);
-
-        const key = JSON.stringify(values);
-        if (!accumulator.has(key)) {
-          accumulator.set(key, new Map());
-          accumulator.get(key).set(sumName, 0);
-          accumulator.get(key).set("Count", 0);
-
-          properties.forEach(
-            //@ts-ignore
-            (agg, index) => accumulator.get(key).set(agg, values[index])
-          );
-        }
-
-        accumulator
-          .get(key)
-          .set(sumName, accumulator.get(key).get(sumName) + object[target]);
-
-        accumulator
-          .get(key)
-          .set("Count", accumulator.get(key).get("Count") + 1);
-
-        return accumulator;
-      }, new Map());
-    };
+    if (filtered.length == 0) {
+      throw new Error("Query not found results");
+    }
 
     const sumName = "Sum_of_" + data.target;
-    const result = grouping(filtered, data.by, data.target, sumName);
+    const result = this.grouping(filtered, data.by, data.target, sumName);
     const extractingValues = Array.from(result.values());
 
     extractingValues.forEach((element: any) => {
