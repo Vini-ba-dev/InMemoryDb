@@ -11,7 +11,7 @@ export class Model<T extends object> {
     this.model = [];
   }
 
-  private where(item: any, { where }: Query) {
+  private where(item: any, { where }: any) {
     const testForEachParam = [];
     for (const queryFieldsIndex in where) {
       const value = where[queryFieldsIndex].value;
@@ -87,26 +87,23 @@ export class Model<T extends object> {
       ErrorHandling("update", "where", data.where, partialUserSchema);
       ErrorHandling("update", "data", data.data, partialUserSchema);
 
-      const queryParamenters = data.where;
+      for (let index in this.model) {
+        if (this.where(this.model[index], data)) {
+          const valuesParamenters = data.data;
 
-      const keys = Object.keys(queryParamenters);
-      const values = Object.values(queryParamenters);
+          const updateKeys = Object.keys(valuesParamenters);
+          const updateValues = Object.values(valuesParamenters);
 
-      const index = this.model.findIndex((n: any) => n[keys[0]] == values[0]);
+          updateKeys.forEach((key, i) => {
+            //@ts-ignore
+            this.model[index][key] = updateValues[i];
+          });
 
-      if (index == -1) {
-        throw new Error("Query not found results");
+          return;
+        }
       }
 
-      const valuesParamenters = data.data;
-
-      const updateKeys = Object.keys(valuesParamenters);
-      const updatsValues = Object.values(valuesParamenters);
-
-      updateKeys.forEach((n, i) => {
-        //@ts-ignore
-        this.model[index][n] = updatsValues[i];
-      });
+      throw new Error("Query not found results");
     } catch (error: any) {
       console.error(error);
     }
