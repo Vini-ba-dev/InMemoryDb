@@ -31,60 +31,96 @@ export class Model<T extends object> {
       console.error(error);
     }
   }
-  findFirst(data: { where: Partial<T> }): T | undefined {
-    const partialUserSchema = this.schema.partial();
-    try {
-      ErrorHandling("findFirst", "where", data.where, partialUserSchema);
-      const queryParamenters = data.where;
-      const keys = Object.keys(queryParamenters);
-      const values = Object.values(queryParamenters);
-
-      const queryResult = this.table.find((line: any) => {
-        for (let key = 0; key < keys.length; key++) {
-          if (line[keys[key]] != values[key]) {
-            return false;
-          }
-        }
-        return true;
-      });
-      return queryResult;
-    } catch (error: any) {
-      console.error(error);
-    }
-  }
-  findMany(data: Query): T[] {
+  findFirst(data: Query): T | undefined {
     const queryParamenters = data.where;
-
-    const queryResult = this.table.filter((line: any) => {
-      //For each param, test if
-      //has a modifier and if it checks if search
-      const testForEachParam = queryParamenters.map((key, i) => {
-        const value = queryParamenters[i].value;
-        const modifier = queryParamenters[i].modifier;
+    return this.table.find((item: any) => {
+      const testForEachParam = [];
+      for (const queryFieldsIndex in queryParamenters) {
+        const value = queryParamenters[queryFieldsIndex].value;
+        const modifier = queryParamenters[queryFieldsIndex].modifier;
+        const field = queryParamenters[queryFieldsIndex].field;
 
         if (modifier != undefined)
           switch (modifier) {
             case Modifier.start:
-              return String(line[key.field]).startsWith(String(value));
+              testForEachParam.push(
+                String(item[field]).startsWith(String(value))
+              );
             case Modifier.end:
-              return String(line[key.field]).endsWith(String(value));
+              testForEachParam.push(
+                String(item[field]).endsWith(String(value))
+              );
             case Modifier.has:
-              return String(line[key.field]).includes(String(value));
+              testForEachParam.push(
+                String(item[field]).includes(String(value))
+              );
             case Modifier.exclude:
-              return !String(line[key.field]).includes(String(value));
-          }
-        if (line[key.field] == queryParamenters[i].value) {
-          return true;
-        } else {
-          return false;
-        }
-      });
+              testForEachParam.push(
+                !String(item[field]).includes(String(value))
+              );
 
-      //return final result for filter method,
-      //by check all tests in an array of responses
+              continue;
+          }
+        if (item[field] == value) {
+          testForEachParam.push(true);
+          continue;
+        }
+        testForEachParam.push(false);
+      }
       return testForEachParam.every((filedlReturn) => filedlReturn == true);
     });
-    return queryResult;
+  }
+  findMany(data: Query): T[] {
+    const queryParamenters = data.where;
+
+    const filtered = [];
+
+    for (var tableIndex in this.table) {
+      //For each param, test if
+      //has a modifier and if it checks if search
+
+      const testForEachParam = [];
+      const line: any = this.table[tableIndex];
+
+      for (const queryFieldsIndex in queryParamenters) {
+        const value = queryParamenters[queryFieldsIndex].value;
+        const modifier = queryParamenters[queryFieldsIndex].modifier;
+        const field = queryParamenters[queryFieldsIndex].field;
+
+        if (modifier != undefined)
+          switch (modifier) {
+            case Modifier.start:
+              testForEachParam.push(
+                String(line[field]).startsWith(String(value))
+              );
+            case Modifier.end:
+              testForEachParam.push(
+                String(line[field]).endsWith(String(value))
+              );
+            case Modifier.has:
+              testForEachParam.push(
+                String(line[field]).includes(String(value))
+              );
+            case Modifier.exclude:
+              testForEachParam.push(
+                !String(line[field]).includes(String(value))
+              );
+
+              continue;
+          }
+        if (line[field] == value) {
+          testForEachParam.push(true);
+          continue;
+        }
+        testForEachParam.push(false);
+      }
+      //return final result for filter method,
+      //by check all tests in an array of responses
+      if (testForEachParam.every((filedlReturn) => filedlReturn == true)) {
+        filtered.push(line);
+      }
+    }
+    return filtered;
   }
   update(data: { where: Partial<T>; data: Partial<T> }) {
     const partialUserSchema = this.schema.partial();
