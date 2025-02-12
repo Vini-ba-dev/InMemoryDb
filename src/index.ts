@@ -20,7 +20,7 @@ client.CreateModel("users", UserSchema);
 users.forEach((user) => client.model.users.create(user));
 
 client.model.users.create(users[0]);
-
+// console.log(client.model.users.model);
 // const usersQueryReturn = client.model.users.findFirst({
 //   where: [
 //     {
@@ -58,13 +58,34 @@ client.model.users.updateMany({
   ],
   data: { type: "common" },
 });
-const usersQueryReturn2 = client.model.users.findFirst({
-  where: [
-    {
-      field: "name",
-      value: "Alice",
-    },
-  ],
-});
 
-console.log(usersQueryReturn2);
+console.log(client.model.users.log);
+// const usersQueryReturn2 = client.model.users.findFirst({
+//   where: [
+//     {
+//       field: "name",
+//       value: "Alice",
+//     },
+//   ],
+// });
+
+// // console.log(usersQueryReturn2);
+
+// const group = client.model.users.groupBy({
+//   by: ["country", "age"],
+//   where: [
+//     {
+//       field: "age",
+//       value: 25,
+//       modifier: "exclude",
+//     },
+//     {
+//       field: "email",
+//       value: "example",
+//       modifier: "has",
+//     },
+//   ],
+//   target: "subscriptionPrice",
+// });
+
+// console.log(group);

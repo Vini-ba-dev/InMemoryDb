@@ -1,17 +1,26 @@
 import { z } from "zod";
 import { ErrorHandling } from "./ErrorHandling";
-import { Query, Modifier, GroupBy } from "./types";
+import {
+  Query,
+  Modifier,
+  GroupBy,
+  LogMsg,
+  unknownObj,
+  Mapped,
+  _0bject,
+} from "./types";
 
 export class Model<T extends object> {
   private schema: z.ZodObject<any>;
-  model: T[];
-
+  private model: T[];
+  log: LogMsg[];
   constructor(schema: z.ZodObject<any>) {
     this.schema = schema;
     this.model = [];
+    this.log = [];
   }
 
-  private where(item: any, { where }: any) {
+  private where(item: unknownObj, { where }: any) {
     const testForEachParam = [];
     for (const queryFieldsIndex in where) {
       const value = where[queryFieldsIndex].value;
@@ -42,7 +51,7 @@ export class Model<T extends object> {
     return testForEachParam.every((filedlReturn) => filedlReturn == true);
   }
   private grouping(
-    objectArray: any,
+    objectArray: unknownObj[],
     properties: string[],
     target: string,
     sumName: string
@@ -83,7 +92,15 @@ export class Model<T extends object> {
     try {
       ErrorHandling("create", "data", data, this.schema);
 
+      const date = new Date();
+
       this.model.push(data);
+
+      this.log.push({
+        date,
+        operationType: "create",
+        queryUsed: data,
+      });
     } catch (error: any) {
       console.error(error);
     }
@@ -94,6 +111,13 @@ export class Model<T extends object> {
         ErrorHandling("createMany", "data", n, this.schema);
 
         this.model.push(n);
+
+        const date = new Date();
+        this.log.push({
+          date,
+          operationType: "create",
+          queryUsed: data,
+        });
       });
     } catch (error: any) {
       console.error(error);
@@ -102,7 +126,7 @@ export class Model<T extends object> {
   findFirst(data: Query): T | undefined {
     for (let index in this.model) {
       let item = this.model[index];
-      if (this.where(item, data)) {
+      if (this.where(item as unknownObj, data)) {
         return item;
       }
     }
@@ -112,7 +136,7 @@ export class Model<T extends object> {
 
     for (let index in this.model) {
       let item = this.model[index];
-      if (this.where(item, data)) {
+      if (this.where(item as unknownObj, data)) {
         filtered.push(item);
       }
     }
@@ -125,7 +149,7 @@ export class Model<T extends object> {
       ErrorHandling("update", "data", data.data, partialUserSchema);
 
       for (let index in this.model) {
-        if (this.where(this.model[index], data)) {
+        if (this.where(this.model[index] as unknownObj, data)) {
           const valuesParamenters = data.data;
 
           const updateKeys = Object.keys(valuesParamenters);
@@ -134,6 +158,12 @@ export class Model<T extends object> {
           updateKeys.forEach((key, i) => {
             //@ts-ignore
             this.model[index][key] = updateValues[i];
+          });
+          const date = new Date();
+          this.log.push({
+            date,
+            operationType: "update",
+            queryUsed: data.data,
           });
 
           return;
@@ -153,7 +183,7 @@ export class Model<T extends object> {
 
       let results = false;
       for (let index in this.model) {
-        if (this.where(this.model[index], data)) {
+        if (this.where(this.model[index] as unknownObj, data)) {
           results = true;
           const valuesParamenters = data.data;
 
@@ -164,6 +194,13 @@ export class Model<T extends object> {
             //@ts-ignore
             this.model[index][key] = updateValues[i];
           });
+
+          const date = new Date();
+          this.log.push({
+            date,
+            operationType: "updateMany",
+            queryUsed: data.data,
+          });
         }
       }
       if (!results) throw new Error("Query not found results");
@@ -172,7 +209,7 @@ export class Model<T extends object> {
     }
   }
   groupBy(data: GroupBy) {
-    const filtered = this.findMany(data.where);
+    const filtered = this.findMany(data.where) as unknownObj[];
     if (filtered.length == 0) {
       throw new Error("Query not found results");
     }
@@ -181,13 +218,17 @@ export class Model<T extends object> {
     const result = this.grouping(filtered, data.by, data.target, sumName);
     const extractingValues = Array.from(result.values());
 
-    extractingValues.forEach((element: any) => {
-      element.set("avg", element.get(sumName) / element.get("Count"));
+    extractingValues.forEach((element: Mapped) => {
+      let avg = element.get(sumName) / element.get("Count");
+      element.set("avg", avg);
     });
 
+    // return extractingValues;
+    // return extractingValues;
     //Convert each element in an simple obj
-    return extractingValues.map((obj: any) =>
-      Object.fromEntries(obj.entries())
-    );
+    return extractingValues.map((mapped: _0bject) => {
+      let mp = mapped.entries();
+      return Object.fromEntries(mp);
+    });
   }
 }

@@ -15,3 +15,26 @@ export type GroupBy = {
   type: string;
   target: string;
 };
+
+export type ModelType = {
+  [i: string]: unknown;
+};
+
+export type LogMsg = {
+  date: Date;
+  operationType: string;
+  queryUsed: any;
+};
+
+export type unknownObj = {
+  [i: string]: unknown;
+};
+
+export type Mapped = {
+  set: (arg1: string, arg2: unknown) => void;
+  get: (arg: string) => number;
+};
+
+export type _0bject = {
+  entries: () => unknown[][];
+};
