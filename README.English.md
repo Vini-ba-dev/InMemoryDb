@@ -97,7 +97,7 @@ Searches are query-based:
 
 ```tsx
 //If nothing is passed, the value will be treated as equal (==)
-export enum Modifier {
+enum Modifier {
   end = "end",
   start = "start",
   has = "has",
@@ -105,9 +105,14 @@ export enum Modifier {
 }
 
 type Query = {
-  where: [
-    { field: string | number; value: string | number; modifier?: Modifier }
-  ];
+  where: [{ field: string; value: string | number; modifier?: Modifier }];
+};
+
+type GroupBy = {
+  by: string[];
+  where: Query;
+  type: string;
+  target: string;
 };
 ```
 
@@ -115,7 +120,7 @@ type Query = {
 
 Acha e retorna o primeiro objeto que corresponde a busca.
 
-```tsx
+```ts
 const usersQueryReturn = client.model.users.findFirst({
   where: [
     {
@@ -130,7 +135,7 @@ const usersQueryReturn = client.model.users.findFirst({
 
 Finds and returns the first object that matches the search.
 
-```tsx
+```ts
 const usersQueryReturn = client.model.users.findMany({
   where: [
     {
@@ -149,12 +154,15 @@ const usersQueryReturn = client.model.users.findMany({
 
 Updates the first object that matches the query.
 
-```tsx
+```ts
 client.model.users.update({
-  where: {
-    id: 1,
-    age: 26,
-  },
+  where: [
+    {
+      field: "name",
+      value: "Al",
+      modifier: Modifier.start,
+    },
+  ],
   data: { age: 26, type: "common" },
 });
 ```
@@ -163,11 +171,14 @@ client.model.users.update({
 
 Updates all objects that match the query.
 
-```tsx
+```ts
 client.model.users.updateMany({
-  where: {
-    type: "admin",
-  },
+  where: [
+    {
+      field: "type",
+      value: "admin",
+    },
+  ],
   data: { type: "common" },
 });
 ```
@@ -180,7 +191,7 @@ client.model.users.updateMany({
 
 Returns an array that is a summary of the objects that match the query.
 
-```tsx
+```ts
 const group = client.model.users.groupBy({
   by: ["country", "age"],
   where: [
