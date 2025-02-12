@@ -184,7 +184,7 @@ export class Model<T extends object> {
     }
   }
   groupBy(data: GroupBy) {
-    const filtered = this.findMany(data);
+    const filtered = this.findMany(data.where);
     /***
      * Original code from: Hannah
      * at: https://dev.to/ketoaustin/sql-group-by-using-javascript-34og
