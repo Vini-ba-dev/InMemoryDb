@@ -6,16 +6,12 @@ export enum Modifier {
 }
 
 export type Query = {
-  where: [
-    { field: string | number; value: string | number; modifier?: Modifier }
-  ];
+  where: [{ field: string; value: string | number; modifier?: Modifier }];
 };
 
 export type GroupBy = {
   by: string[];
-  where: [
-    { field: string | number; value: string | number; modifier?: Modifier }
-  ];
+  where: Query;
   type: string;
   target: string;
 };

@@ -4,18 +4,86 @@ import { Query, Modifier, GroupBy } from "./types";
 
 export class Model<T extends object> {
   private schema: z.ZodObject<any>;
-  table: T[];
+  model: T[];
 
   constructor(schema: z.ZodObject<any>) {
     this.schema = schema;
-    this.table = [];
+    this.model = [];
+  }
+
+  private where(item: any, { where }: any) {
+    const testForEachParam = [];
+    for (const queryFieldsIndex in where) {
+      const value = where[queryFieldsIndex].value;
+      const modifier = where[queryFieldsIndex].modifier;
+      const field = where[queryFieldsIndex].field;
+
+      switch (modifier) {
+        case Modifier.start:
+          testForEachParam.push(String(item[field]).startsWith(String(value)));
+          continue;
+        case Modifier.end:
+          testForEachParam.push(String(item[field]).endsWith(String(value)));
+          continue;
+        case Modifier.has:
+          testForEachParam.push(String(item[field]).includes(String(value)));
+          continue;
+        case Modifier.exclude:
+          testForEachParam.push(!String(item[field]).includes(String(value)));
+          continue;
+        default:
+          if (item[field] == value) {
+            testForEachParam.push(true);
+            continue;
+          }
+      }
+      testForEachParam.push(false);
+    }
+    return testForEachParam.every((filedlReturn) => filedlReturn == true);
+  }
+  private grouping(
+    objectArray: any,
+    properties: string[],
+    target: string,
+    sumName: string
+  ) {
+    /***
+     * Original code from: Hannah
+     * at: https://dev.to/ketoaustin/sql-group-by-using-javascript-34og
+     */
+
+    //@ts-ignore
+    return objectArray.reduce((accumulator, object) => {
+      //@ts-ignore
+      const values = properties.map((x) => object[x] || null);
+
+      const key = JSON.stringify(values);
+      if (!accumulator.has(key)) {
+        accumulator.set(key, new Map());
+        accumulator.get(key).set(sumName, 0);
+        accumulator.get(key).set("Count", 0);
+
+        properties.forEach(
+          //@ts-ignore
+          (agg, index) => accumulator.get(key).set(agg, values[index])
+        );
+      }
+
+      accumulator
+        .get(key)
+        .set(sumName, accumulator.get(key).get(sumName) + object[target]);
+
+      accumulator.get(key).set("Count", accumulator.get(key).get("Count") + 1);
+
+      return accumulator;
+    }, new Map());
   }
 
   create(data: T): void {
     try {
       ErrorHandling("create", "data", data, this.schema);
 
-      this.table.push(data);
+      this.model.push(data);
     } catch (error: any) {
       console.error(error);
     }
@@ -25,168 +93,92 @@ export class Model<T extends object> {
       data.forEach((n) => {
         ErrorHandling("createMany", "data", n, this.schema);
 
-        this.table.push(n);
+        this.model.push(n);
       });
     } catch (error: any) {
       console.error(error);
     }
   }
-  findFirst(data: { where: Partial<T> }): T | undefined {
-    const partialUserSchema = this.schema.partial();
-    try {
-      ErrorHandling("findFirst", "where", data.where, partialUserSchema);
-      const queryParamenters = data.where;
-      const keys = Object.keys(queryParamenters);
-      const values = Object.values(queryParamenters);
-
-      const queryResult = this.table.find((line: any) => {
-        for (let key = 0; key < keys.length; key++) {
-          if (line[keys[key]] != values[key]) {
-            return false;
-          }
-        }
-        return true;
-      });
-      return queryResult;
-    } catch (error: any) {
-      console.error(error);
+  findFirst(data: Query): T | undefined {
+    for (let index in this.model) {
+      let item = this.model[index];
+      if (this.where(item, data)) {
+        return item;
+      }
     }
   }
   findMany(data: Query): T[] {
-    const queryParamenters = data.where;
+    const filtered = [];
 
-    const queryResult = this.table.filter((line: any) => {
-      //For each param, test if
-      //has a modifier and if it checks if search
-      const testForEachParam = queryParamenters.map((key, i) => {
-        const value = queryParamenters[i].value;
-        const modifier = queryParamenters[i].modifier;
-
-        if (modifier != undefined)
-          switch (modifier) {
-            case Modifier.start:
-              return String(line[key.field]).startsWith(String(value));
-            case Modifier.end:
-              return String(line[key.field]).endsWith(String(value));
-            case Modifier.has:
-              return String(line[key.field]).includes(String(value));
-            case Modifier.exclude:
-              return !String(line[key.field]).includes(String(value));
-          }
-        if (line[key.field] == queryParamenters[i].value) {
-          return true;
-        } else {
-          return false;
-        }
-      });
-
-      //return final result for filter method,
-      //by check all tests in an array of responses
-      return testForEachParam.every((filedlReturn) => filedlReturn == true);
-    });
-    return queryResult;
+    for (let index in this.model) {
+      let item = this.model[index];
+      if (this.where(item, data)) {
+        filtered.push(item);
+      }
+    }
+    return filtered;
   }
-  update(data: { where: Partial<T>; data: Partial<T> }) {
+  update(data: { where: Query; data: Partial<T> }) {
     const partialUserSchema = this.schema.partial();
 
     try {
-      ErrorHandling("update", "where", data.where, partialUserSchema);
       ErrorHandling("update", "data", data.data, partialUserSchema);
 
-      const queryParamenters = data.where;
+      for (let index in this.model) {
+        if (this.where(this.model[index], data)) {
+          const valuesParamenters = data.data;
 
-      const keys = Object.keys(queryParamenters);
-      const values = Object.values(queryParamenters);
+          const updateKeys = Object.keys(valuesParamenters);
+          const updateValues = Object.values(valuesParamenters);
 
-      const index = this.table.findIndex((n: any) => n[keys[0]] == values[0]);
+          updateKeys.forEach((key, i) => {
+            //@ts-ignore
+            this.model[index][key] = updateValues[i];
+          });
 
-      if (index == -1) {
-        throw new Error("Query not found results");
+          return;
+        }
       }
 
-      const valuesParamenters = data.data;
-
-      const updateKeys = Object.keys(valuesParamenters);
-      const updatsValues = Object.values(valuesParamenters);
-
-      updateKeys.forEach((n, i) => {
-        //@ts-ignore
-        this.table[index][n] = updatsValues[i];
-      });
+      throw new Error("Query not found results");
     } catch (error: any) {
       console.error(error);
     }
   }
-  updateMany(data: { where: Partial<T>; data: Partial<T> }) {
+  updateMany(data: { where: Query; data: Partial<T> }) {
     const partialUserSchema = this.schema.partial();
 
     try {
-      ErrorHandling("updateMany", "where", data.where, partialUserSchema);
-      ErrorHandling("updateMany", "data", data.data, partialUserSchema);
+      ErrorHandling("update", "data", data.data, partialUserSchema);
 
-      const queryParamenters = data.where;
+      let results = false;
+      for (let index in this.model) {
+        if (this.where(this.model[index], data)) {
+          results = true;
+          const valuesParamenters = data.data;
 
-      const keys = Object.keys(queryParamenters);
-      const values = Object.values(queryParamenters);
+          const updateKeys = Object.keys(valuesParamenters);
+          const updateValues = Object.values(valuesParamenters);
 
-      const valuesParamenters = data.data;
-
-      const updateKeys = Object.keys(valuesParamenters);
-      const updatsValues = Object.values(valuesParamenters);
-
-      for (let index = 0; index < this.table.length; index++) {
-        //@ts-ignore
-        if (this.table[index][keys[0]] == values[0]) {
-          updateKeys.forEach((n, i) => {
+          updateKeys.forEach((key, i) => {
             //@ts-ignore
-            this.table[index][n] = updatsValues[i];
+            this.model[index][key] = updateValues[i];
           });
         }
       }
+      if (!results) throw new Error("Query not found results");
     } catch (error: any) {
       console.error(error);
     }
   }
   groupBy(data: GroupBy) {
-    const filtered = this.findMany(data);
-    /***
-     * Original code from: Hannah
-     * at: https://dev.to/ketoaustin/sql-group-by-using-javascript-34og
-     */
-
-    //@ts-ignore
-    const grouping = (objectArray, properties, target, sumName) => {
-      //@ts-ignore
-      return objectArray.reduce((accumulator, object) => {
-        //@ts-ignore
-        const values = properties.map((x) => object[x] || null);
-
-        const key = JSON.stringify(values);
-        if (!accumulator.has(key)) {
-          accumulator.set(key, new Map());
-          accumulator.get(key).set(sumName, 0);
-          accumulator.get(key).set("Count", 0);
-
-          properties.forEach(
-            //@ts-ignore
-            (agg, index) => accumulator.get(key).set(agg, values[index])
-          );
-        }
-
-        accumulator
-          .get(key)
-          .set(sumName, accumulator.get(key).get(sumName) + object[target]);
-
-        accumulator
-          .get(key)
-          .set("Count", accumulator.get(key).get("Count") + 1);
-
-        return accumulator;
-      }, new Map());
-    };
+    const filtered = this.findMany(data.where);
+    if (filtered.length == 0) {
+      throw new Error("Query not found results");
+    }
 
     const sumName = "Sum_of_" + data.target;
-    const result = grouping(filtered, data.by, data.target, sumName);
+    const result = this.grouping(filtered, data.by, data.target, sumName);
     const extractingValues = Array.from(result.values());
 
     extractingValues.forEach((element: any) => {

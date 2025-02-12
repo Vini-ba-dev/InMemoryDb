@@ -3,9 +3,7 @@ Minha motivação é ter uma forma melhor de controlar minhas coleções em JS, 
 
 O banco funciona como uma coleção de coleções. Chamaremos cada coleção de "model". Os nomes dos métodos vieram do Prisma ORM, e tentei me aproximar de sua estrutura de consulta.
 
-
 > ⚠️ No momento não há formas de criar IDs automáticos.
-
 
 ---
 
@@ -24,7 +22,6 @@ const UserSchema = z.object({
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });
-
 ```
 
 Depois vamos importar Db, que é a class pai que cuida de deixar os models centralizados numa única instância.
@@ -32,7 +29,6 @@ Depois vamos importar Db, que é a class pai que cuida de deixar os models centr
 ```tsx
 const client = new Db();
 client.CreateModel("users", UserSchema);
-
 ```
 
 ---
@@ -91,7 +87,6 @@ const newUsers = [
 ];
 
 client.model.users.createMany(newUsers);
-
 ```
 
 ---
@@ -100,9 +95,9 @@ client.model.users.createMany(newUsers);
 
 As buscas são baseadas em query:
 
-```tsx
+```ts
 //Se nada for passado, o valor será tratato como igual (==)
-export enum Modifier {
+enum Modifier {
   end = "end",
   start = "start",
   has = "has",
@@ -110,11 +105,15 @@ export enum Modifier {
 }
 
 type Query = {
-  where: [
-    { field: string | number; value: string | number; modifier?: Modifier }
-  ];
+  where: [{ field: string; value: string | number; modifier?: Modifier }];
 };
 
+type GroupBy = {
+  by: string[];
+  where: Query;
+  type: string;
+  target: string;
+};
 ```
 
 ### client.model.users.findFirst(query)
@@ -122,13 +121,14 @@ type Query = {
 Acha e retorna o primeiro objeto que corresponde a busca.
 
 ```tsx
-const user = client.model.users.findFirst({
-  where: {
-    age: 30,
-    type: "common",
-  },
+const usersQueryReturn = client.model.users.findFirst({
+  where: [
+    {
+      field: "age",
+      value: 25,
+    },
+  ],
 });
-
 ```
 
 ### client.model.users.findMany(query)
@@ -136,13 +136,14 @@ const user = client.model.users.findFirst({
 Acha e retorna um array de todos os objetos que correspondem a busca.
 
 ```tsx
-const users = client.model.users.findMany({
-  where: {
-    age: 30,
-    type: "common",
-  },
+const usersQueryReturn = client.model.users.findMany({
+  where: [
+    {
+      field: "age",
+      value: 25,
+    },
+  ],
 });
-
 ```
 
 ---
@@ -155,13 +156,15 @@ Atualiza o primeiro objeto que corresponder a query.
 
 ```tsx
 client.model.users.update({
-  where: {
-    id: 1,
-    age: 26,
-  },
+  where: [
+    {
+      field: "name",
+      value: "Al",
+      modifier: Modifier.start,
+    },
+  ],
   data: { age: 26, type: "common" },
 });
-
 ```
 
 ### client.model.users.updateMany(query)
@@ -170,12 +173,14 @@ Atualiza o todos os objetos que corresponderem a query.
 
 ```tsx
 client.model.users.updateMany({
-  where: {
-    type: "admin",
-  },
+  where: [
+    {
+      field: "type",
+      value: "admin",
+    },
+  ],
   data: { type: "common" },
 });
-
 ```
 
 ---
@@ -221,5 +226,4 @@ const group = client.model.users.groupBy({
     avg: 24.99,
   },
 ];
-
 ```
