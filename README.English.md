@@ -116,11 +116,13 @@ type Query = {
 Acha e retorna o primeiro objeto que corresponde a busca.
 
 ```tsx
-const user = client.model.users.findFirst({
-  where: {
-    age: 30,
-    type: "common",
-  },
+const usersQueryReturn = client.model.users.findFirst({
+  where: [
+    {
+      field: "age",
+      value: 25,
+    },
+  ],
 });
 ```
 
@@ -129,11 +131,13 @@ const user = client.model.users.findFirst({
 Finds and returns the first object that matches the search.
 
 ```tsx
-const users = client.model.users.findMany({
-  where: {
-    age: 30,
-    type: "common",
-  },
+const usersQueryReturn = client.model.users.findMany({
+  where: [
+    {
+      field: "age",
+      value: 25,
+    },
+  ],
 });
 ```
 
