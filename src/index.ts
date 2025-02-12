@@ -32,10 +32,12 @@ const usersQueryReturn = client.model.users.findFirst({
 console.log(usersQueryReturn);
 
 client.model.users.update({
-  where: {
-    field: "age",
-    value: 25,
-  },
+  where: [
+    {
+      field: "age",
+      value: 25,
+    },
+  ],
   data: {
     age: 29,
   },

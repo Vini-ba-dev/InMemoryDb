@@ -80,11 +80,10 @@ export class Model<T extends object> {
     }
     return filtered;
   }
-  update(data: { where: Partial<T>; data: Partial<T> }) {
+  update(data: { where: Query; data: Partial<T> }) {
     const partialUserSchema = this.schema.partial();
 
     try {
-      ErrorHandling("update", "where", data.where, partialUserSchema);
       ErrorHandling("update", "data", data.data, partialUserSchema);
 
       for (let index in this.model) {
