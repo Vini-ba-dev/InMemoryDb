@@ -107,32 +107,28 @@ export class Model<T extends object> {
       console.error(error);
     }
   }
-  updateMany(data: { where: Partial<T>; data: Partial<T> }) {
+  updateMany(data: { where: Query; data: Partial<T> }) {
     const partialUserSchema = this.schema.partial();
 
     try {
-      ErrorHandling("updateMany", "where", data.where, partialUserSchema);
-      ErrorHandling("updateMany", "data", data.data, partialUserSchema);
+      ErrorHandling("update", "data", data.data, partialUserSchema);
 
-      const queryParamenters = data.where;
+      let results = false;
+      for (let index in this.model) {
+        if (this.where(this.model[index], data)) {
+          results = true;
+          const valuesParamenters = data.data;
 
-      const keys = Object.keys(queryParamenters);
-      const values = Object.values(queryParamenters);
+          const updateKeys = Object.keys(valuesParamenters);
+          const updateValues = Object.values(valuesParamenters);
 
-      const valuesParamenters = data.data;
-
-      const updateKeys = Object.keys(valuesParamenters);
-      const updatsValues = Object.values(valuesParamenters);
-
-      for (let index = 0; index < this.model.length; index++) {
-        //@ts-ignore
-        if (this.model[index][keys[0]] == values[0]) {
-          updateKeys.forEach((n, i) => {
+          updateKeys.forEach((key, i) => {
             //@ts-ignore
-            this.model[index][n] = updatsValues[i];
+            this.model[index][key] = updateValues[i];
           });
         }
       }
+      if (!results) throw new Error("Query not found results");
     } catch (error: any) {
       console.error(error);
     }
