@@ -18,24 +18,24 @@ export class Model<T extends object> {
       const modifier = where[queryFieldsIndex].modifier;
       const field = where[queryFieldsIndex].field;
 
-      if (modifier != undefined)
-        switch (modifier) {
-          case Modifier.start:
-            testForEachParam.push(
-              String(item[field]).startsWith(String(value))
-            );
-          case Modifier.end:
-            testForEachParam.push(String(item[field]).endsWith(String(value)));
-          case Modifier.has:
-            testForEachParam.push(String(item[field]).includes(String(value)));
-          case Modifier.exclude:
-            testForEachParam.push(!String(item[field]).includes(String(value)));
-
+      switch (modifier) {
+        case Modifier.start:
+          testForEachParam.push(String(item[field]).startsWith(String(value)));
+          continue;
+        case Modifier.end:
+          testForEachParam.push(String(item[field]).endsWith(String(value)));
+          continue;
+        case Modifier.has:
+          testForEachParam.push(String(item[field]).includes(String(value)));
+          continue;
+        case Modifier.exclude:
+          testForEachParam.push(!String(item[field]).includes(String(value)));
+          continue;
+        default:
+          if (item[field] == value) {
+            testForEachParam.push(true);
             continue;
-        }
-      if (item[field] == value) {
-        testForEachParam.push(true);
-        continue;
+          }
       }
       testForEachParam.push(false);
     }

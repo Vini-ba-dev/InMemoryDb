@@ -1,6 +1,7 @@
 import { Db } from "./Db";
 import { z } from "zod";
 import { users } from "./Mocks";
+import { Modifier } from "./types";
 
 const UserSchema = z.object({
   id: z.number().int(),
@@ -20,29 +21,43 @@ users.forEach((user) => client.model.users.create(user));
 
 client.model.users.create(users[0]);
 
-const usersQueryReturn = client.model.users.findFirst({
+// const usersQueryReturn = client.model.users.findFirst({
+//   where: [
+//     {
+//       field: "age",
+//       value: 25,
+//     },
+//   ],
+// });
+
+// console.log(usersQueryReturn);
+
+// client.model.users.update({
+//   where: [
+//     {
+//       field: "age",
+//       value: 25,
+//     },
+//   ],
+//   data: {
+//     age: 29,
+//   },
+// });
+
+client.model.users.updateMany({
   where: [
+    // {
+    //   field: "type",
+    //   value: "admin",
+    // },
     {
-      field: "age",
-      value: 25,
+      field: "name",
+      value: "Al",
+      modifier: Modifier.start,
     },
   ],
+  data: { type: "common" },
 });
-
-console.log(usersQueryReturn);
-
-client.model.users.update({
-  where: [
-    {
-      field: "age",
-      value: 25,
-    },
-  ],
-  data: {
-    age: 29,
-  },
-});
-
 const usersQueryReturn2 = client.model.users.findFirst({
   where: [
     {
