@@ -1,7 +1,6 @@
 import { Db } from "./Db";
 import { z } from "zod";
 import { users } from "./Mocks";
-import { Modifier } from "./types";
 
 const UserSchema = z.object({
   id: z.number().int(),
