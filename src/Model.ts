@@ -4,18 +4,48 @@ import { Query, Modifier, GroupBy } from "./types";
 
 export class Model<T extends object> {
   private schema: z.ZodObject<any>;
-  table: T[];
+  model: T[];
 
   constructor(schema: z.ZodObject<any>) {
     this.schema = schema;
-    this.table = [];
+    this.model = [];
   }
 
+  private where(item: any, { where }: Query) {
+    const testForEachParam = [];
+    for (const queryFieldsIndex in where) {
+      const value = where[queryFieldsIndex].value;
+      const modifier = where[queryFieldsIndex].modifier;
+      const field = where[queryFieldsIndex].field;
+
+      if (modifier != undefined)
+        switch (modifier) {
+          case Modifier.start:
+            testForEachParam.push(
+              String(item[field]).startsWith(String(value))
+            );
+          case Modifier.end:
+            testForEachParam.push(String(item[field]).endsWith(String(value)));
+          case Modifier.has:
+            testForEachParam.push(String(item[field]).includes(String(value)));
+          case Modifier.exclude:
+            testForEachParam.push(!String(item[field]).includes(String(value)));
+
+            continue;
+        }
+      if (item[field] == value) {
+        testForEachParam.push(true);
+        continue;
+      }
+      testForEachParam.push(false);
+    }
+    return testForEachParam.every((filedlReturn) => filedlReturn == true);
+  }
   create(data: T): void {
     try {
       ErrorHandling("create", "data", data, this.schema);
 
-      this.table.push(data);
+      this.model.push(data);
     } catch (error: any) {
       console.error(error);
     }
@@ -25,99 +55,27 @@ export class Model<T extends object> {
       data.forEach((n) => {
         ErrorHandling("createMany", "data", n, this.schema);
 
-        this.table.push(n);
+        this.model.push(n);
       });
     } catch (error: any) {
       console.error(error);
     }
   }
   findFirst(data: Query): T | undefined {
-    const queryParamenters = data.where;
-    return this.table.find((item: any) => {
-      const testForEachParam = [];
-      for (const queryFieldsIndex in queryParamenters) {
-        const value = queryParamenters[queryFieldsIndex].value;
-        const modifier = queryParamenters[queryFieldsIndex].modifier;
-        const field = queryParamenters[queryFieldsIndex].field;
-
-        if (modifier != undefined)
-          switch (modifier) {
-            case Modifier.start:
-              testForEachParam.push(
-                String(item[field]).startsWith(String(value))
-              );
-            case Modifier.end:
-              testForEachParam.push(
-                String(item[field]).endsWith(String(value))
-              );
-            case Modifier.has:
-              testForEachParam.push(
-                String(item[field]).includes(String(value))
-              );
-            case Modifier.exclude:
-              testForEachParam.push(
-                !String(item[field]).includes(String(value))
-              );
-
-              continue;
-          }
-        if (item[field] == value) {
-          testForEachParam.push(true);
-          continue;
-        }
-        testForEachParam.push(false);
+    for (let index in this.model) {
+      let item = this.model[index];
+      if (this.where(item, data)) {
+        return item;
       }
-      return testForEachParam.every((filedlReturn) => filedlReturn == true);
-    });
+    }
   }
   findMany(data: Query): T[] {
-    const queryParamenters = data.where;
-
     const filtered = [];
 
-    for (var tableIndex in this.table) {
-      //For each param, test if
-      //has a modifier and if it checks if search
-
-      const testForEachParam = [];
-      const line: any = this.table[tableIndex];
-
-      for (const queryFieldsIndex in queryParamenters) {
-        const value = queryParamenters[queryFieldsIndex].value;
-        const modifier = queryParamenters[queryFieldsIndex].modifier;
-        const field = queryParamenters[queryFieldsIndex].field;
-
-        if (modifier != undefined)
-          switch (modifier) {
-            case Modifier.start:
-              testForEachParam.push(
-                String(line[field]).startsWith(String(value))
-              );
-            case Modifier.end:
-              testForEachParam.push(
-                String(line[field]).endsWith(String(value))
-              );
-            case Modifier.has:
-              testForEachParam.push(
-                String(line[field]).includes(String(value))
-              );
-            case Modifier.exclude:
-              testForEachParam.push(
-                !String(line[field]).includes(String(value))
-              );
-
-              continue;
-          }
-        if (line[field] == value) {
-          testForEachParam.push(true);
-          continue;
-        }
-        testForEachParam.push(false);
-      }
-      //return final result for filter method,
-      //by check all tests in an array of responses
-      if (testForEachParam.every((filedlReturn) => filedlReturn == true)) {
-        filtered.push(line);
+    for (let index in this.model) {
+      let item = this.model[index];
+      if (this.where(item, data)) {
+        filtered.push(item);
       }
     }
     return filtered;
@@ -134,7 +92,7 @@ export class Model<T extends object> {
       const keys = Object.keys(queryParamenters);
       const values = Object.values(queryParamenters);
 
-      const index = this.table.findIndex((n: any) => n[keys[0]] == values[0]);
+      const index = this.model.findIndex((n: any) => n[keys[0]] == values[0]);
 
       if (index == -1) {
         throw new Error("Query not found results");
@@ -147,7 +105,7 @@ export class Model<T extends object> {
 
       updateKeys.forEach((n, i) => {
         //@ts-ignore
-        this.table[index][n] = updatsValues[i];
+        this.model[index][n] = updatsValues[i];
       });
     } catch (error: any) {
       console.error(error);
@@ -170,12 +128,12 @@ export class Model<T extends object> {
       const updateKeys = Object.keys(valuesParamenters);
       const updatsValues = Object.values(valuesParamenters);
 
-      for (let index = 0; index < this.table.length; index++) {
+      for (let index = 0; index < this.model.length; index++) {
         //@ts-ignore
-        if (this.table[index][keys[0]] == values[0]) {
+        if (this.model[index][keys[0]] == values[0]) {
           updateKeys.forEach((n, i) => {
             //@ts-ignore
-            this.table[index][n] = updatsValues[i];
+            this.model[index][n] = updatsValues[i];
           });
         }
       }
