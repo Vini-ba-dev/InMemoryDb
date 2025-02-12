@@ -19,3 +19,14 @@ client.CreateModel("users", UserSchema);
 users.forEach((user) => client.model.users.create(user));
 
 client.model.users.create(users[0]);
+
+const usersQueryReturn = client.model.users.findFirst({
+  where: [
+    {
+      field: "age",
+      value: 25,
+    },
+  ],
+});
+
+console.log(usersQueryReturn);
