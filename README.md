@@ -95,9 +95,9 @@ client.model.users.createMany(newUsers);
 
 As buscas são baseadas em query:
 
-```tsx
+```ts
 //Se nada for passado, o valor será tratato como igual (==)
-export enum Modifier {
+enum Modifier {
   end = "end",
   start = "start",
   has = "has",
@@ -105,9 +105,14 @@ export enum Modifier {
 }
 
 type Query = {
-  where: [
-    { field: string | number; value: string | number; modifier?: Modifier }
-  ];
+  where: [{ field: string; value: string | number; modifier?: Modifier }];
+};
+
+type GroupBy = {
+  by: string[];
+  where: Query;
+  type: string;
+  target: string;
 };
 ```
 
@@ -151,10 +156,13 @@ Atualiza o primeiro objeto que corresponder a query.
 
 ```tsx
 client.model.users.update({
-  where: {
-    id: 1,
-    age: 26,
-  },
+  where: [
+    {
+      field: "name",
+      value: "Al",
+      modifier: Modifier.start,
+    },
+  ],
   data: { age: 26, type: "common" },
 });
 ```
@@ -165,9 +173,12 @@ Atualiza o todos os objetos que corresponderem a query.
 
 ```tsx
 client.model.users.updateMany({
-  where: {
-    type: "admin",
-  },
+  where: [
+    {
+      field: "type",
+      value: "admin",
+    },
+  ],
   data: { type: "common" },
 });
 ```
