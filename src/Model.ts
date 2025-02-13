@@ -249,6 +249,37 @@ export class Model<T extends object> {
       console.error(error);
     }
   }
+  delete(data: { where: Query }) {
+    const date = new Date();
+    try {
+      for (let index in this.model) {
+        if (this.where(this.model[Number(index)] as unknownObj, data)) {
+          console.log(this.model.splice(Number(index), 1));
+
+          this.createLog({
+            date,
+            method: "delete",
+            query: JSON.stringify(data.where),
+            status: "sucess",
+            changes: 1,
+          });
+          return;
+        }
+      }
+
+      throw new Error("Query not found results");
+    } catch (error: any) {
+      this.createLog({
+        date,
+        method: "delete",
+        query: JSON.stringify(data.where),
+        status: "fail",
+        changes: 0,
+      });
+
+      console.error(error);
+    }
+  }
   groupBy(data: GroupBy) {
     const filtered = this.findMany(data.where) as unknownObj[];
     if (filtered.length == 0) {
