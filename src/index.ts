@@ -1,6 +1,7 @@
 import { Db } from "./Db";
 import { z } from "zod";
 import { users } from "./Mocks";
+import { Modifier } from "./types";
 
 const UserSchema = z.object({
   id: z.number().int(),
@@ -16,4 +17,18 @@ const UserSchema = z.object({
 const client = new Db();
 
 client.CreateModel("users", UserSchema);
-users.forEach((user) => client.model.users.create(user));
+// users.forEach((user) => client.model.users.create(user));
+client.model.users.create(users[0]);
+client.model.users.createMany(users);
+client.model.users.update({
+  where: [
+    {
+      field: "name",
+      value: "Al",
+      modifier: Modifier.start,
+    },
+  ],
+  data: { age: 26, type: "common" },
+});
+const logs = client.model.users.readLogs();
+console.log(logs);

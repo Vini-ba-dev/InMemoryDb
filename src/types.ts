@@ -22,8 +22,10 @@ export type ModelType = {
 
 export type LogMsg = {
   date: Date;
-  operationType: string;
-  queryUsed: any;
+  method: string;
+  query: any;
+  changes: number;
+  status: "sucess" | "fail";
 };
 
 export type unknownObj = {

@@ -13,13 +13,19 @@ import {
 export class Model<T extends object> {
   private schema: z.ZodObject<any>;
   private model: T[];
-  log: LogMsg[];
+  private logs: string[];
   constructor(schema: z.ZodObject<any>) {
     this.schema = schema;
     this.model = [];
-    this.log = [];
+    this.logs = [];
   }
-
+  private createLog(data: LogMsg) {
+    const log = `|${data.date} | method use: ${data.method} | query: ${data.query} | changes: ${data.changes} | status: ${data.status}|`;
+    this.logs.push(log);
+  }
+  readLogs() {
+    return this.logs;
+  }
   private where(item: unknownObj, { where }: any) {
     const testForEachParam = [];
     for (const queryFieldsIndex in where) {
@@ -89,37 +95,53 @@ export class Model<T extends object> {
   }
 
   create(data: T): void {
+    const date = new Date();
     try {
       ErrorHandling("create", "data", data, this.schema);
 
-      const date = new Date();
-
       this.model.push(data);
 
-      this.log.push({
+      this.createLog({
         date,
-        operationType: "create",
-        queryUsed: data,
+        method: "create",
+        query: "",
+        status: "sucess",
+        changes: 1,
       });
     } catch (error: any) {
+      this.createLog({
+        date,
+        method: "create",
+        query: "",
+        status: "fail",
+        changes: 0,
+      });
       console.error(error);
     }
   }
   createMany(data: T[]) {
+    const date = new Date();
     try {
       data.forEach((n) => {
         ErrorHandling("createMany", "data", n, this.schema);
 
         this.model.push(n);
-
-        const date = new Date();
-        this.log.push({
-          date,
-          operationType: "create",
-          queryUsed: data,
-        });
+      });
+      this.createLog({
+        date,
+        method: "createMany",
+        query: "",
+        status: "sucess",
+        changes: data.length,
       });
     } catch (error: any) {
+      this.createLog({
+        date,
+        method: "createMany",
+        query: "",
+        status: "fail",
+        changes: 0,
+      });
       console.error(error);
     }
   }
@@ -144,6 +166,7 @@ export class Model<T extends object> {
   }
   update(data: { where: Query; data: Partial<T> }) {
     const partialUserSchema = this.schema.partial();
+    const date = new Date();
 
     try {
       ErrorHandling("update", "data", data.data, partialUserSchema);
@@ -159,30 +182,41 @@ export class Model<T extends object> {
             //@ts-ignore
             this.model[index][key] = updateValues[i];
           });
-          const date = new Date();
-          this.log.push({
-            date,
-            operationType: "update",
-            queryUsed: data.data,
-          });
 
+          this.createLog({
+            date,
+            method: "update",
+            query: JSON.stringify(data.where),
+            status: "sucess",
+            changes: 1,
+          });
           return;
         }
       }
 
       throw new Error("Query not found results");
     } catch (error: any) {
+      this.createLog({
+        date,
+        method: "update",
+        query: JSON.stringify(data.where),
+        status: "fail",
+        changes: 0,
+      });
+
       console.error(error);
     }
   }
   updateMany(data: { where: Query; data: Partial<T> }) {
     const partialUserSchema = this.schema.partial();
-
+    const date = new Date();
     try {
       ErrorHandling("update", "data", data.data, partialUserSchema);
 
       let results = false;
+      let acc = 0;
       for (let index in this.model) {
+        acc++;
         if (this.where(this.model[index] as unknownObj, data)) {
           results = true;
           const valuesParamenters = data.data;
@@ -194,17 +228,24 @@ export class Model<T extends object> {
             //@ts-ignore
             this.model[index][key] = updateValues[i];
           });
-
-          const date = new Date();
-          this.log.push({
-            date,
-            operationType: "updateMany",
-            queryUsed: data.data,
-          });
         }
       }
+      this.createLog({
+        date,
+        method: "updateMany",
+        query: JSON.stringify(data.where),
+        status: "sucess",
+        changes: acc,
+      });
       if (!results) throw new Error("Query not found results");
     } catch (error: any) {
+      this.createLog({
+        date,
+        method: "updateMany",
+        query: JSON.stringify(data.where),
+        status: "fail",
+        changes: 0,
+      });
       console.error(error);
     }
   }
@@ -222,13 +263,9 @@ export class Model<T extends object> {
       let avg = element.get(sumName) / element.get("Count");
       element.set("avg", avg);
     });
-
-    // return extractingValues;
-    // return extractingValues;
     //Convert each element in an simple obj
     return extractingValues.map((mapped: _0bject) => {
-      let mp = mapped.entries();
-      return Object.fromEntries(mp);
+      return Object.fromEntries(mapped.entries());
     });
   }
 }
