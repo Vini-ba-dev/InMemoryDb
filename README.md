@@ -185,6 +185,14 @@ client.model.users.updateMany({
 
 ---
 
+## Exclusão
+
+### client.model.users.delete(query)
+
+### client.model.users.deleteMany(query)
+
+---
+
 ## Agregação
 
 ### client.model.users.groupBy(query)

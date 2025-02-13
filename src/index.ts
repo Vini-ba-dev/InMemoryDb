@@ -20,7 +20,7 @@ client.CreateModel("users", UserSchema);
 // users.forEach((user) => client.model.users.create(user));
 client.model.users.create(users[0]);
 client.model.users.createMany(users);
-client.model.users.delete({
+client.model.users.deleteMany({
   where: [
     {
       field: "name",

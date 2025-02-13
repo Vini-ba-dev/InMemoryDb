@@ -216,8 +216,8 @@ export class Model<T extends object> {
       let results = false;
       let acc = 0;
       for (let index in this.model) {
-        acc++;
         if (this.where(this.model[index] as unknownObj, data)) {
+          acc++;
           results = true;
           const valuesParamenters = data.data;
 
@@ -277,6 +277,37 @@ export class Model<T extends object> {
         changes: 0,
       });
 
+      console.error(error);
+    }
+  }
+  deleteMany(data: { where: Query }) {
+    const date = new Date();
+    try {
+      let results = false;
+      let acc = 0;
+      for (let index in this.model) {
+        if (this.where(this.model[index] as unknownObj, data)) {
+          acc++;
+          results = true;
+          console.log(this.model.splice(Number(index), 1));
+        }
+      }
+      this.createLog({
+        date,
+        method: "deleteMany",
+        query: JSON.stringify(data.where),
+        status: "sucess",
+        changes: acc,
+      });
+      if (!results) throw new Error("Query not found results");
+    } catch (error: any) {
+      this.createLog({
+        date,
+        method: "deleteMany",
+        query: JSON.stringify(data.where),
+        status: "fail",
+        changes: 0,
+      });
       console.error(error);
     }
   }
