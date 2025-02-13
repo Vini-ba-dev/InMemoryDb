@@ -235,3 +235,9 @@ const group = client.model.users.groupBy({
   },
 ];
 ```
+
+---
+
+## Logs
+
+### client.model.users.readLogs()
