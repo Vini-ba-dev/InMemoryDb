@@ -5,9 +5,9 @@ export enum Modifier {
   exclude = "exclude",
 }
 
-export type Query = {
-  where: [{ field: string; value: string | number; modifier?: Modifier }];
-};
+export type Query = [
+  { field: string; value: string | number; modifier?: Modifier }
+];
 
 export type GroupBy = {
   by: string[];
@@ -24,8 +24,6 @@ export type LogMsg = {
   date: Date;
   method: string;
   query: any;
-  changes: number;
-  status: "sucess" | "fail";
 };
 
 export type unknownObj = {

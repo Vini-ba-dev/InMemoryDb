@@ -1,5 +1,3 @@
-import { z } from "zod";
-import { ErrorHandling } from "./ErrorHandling";
 import {
   Query,
   Modifier,
@@ -10,24 +8,35 @@ import {
   _0bject,
 } from "./types";
 
-export class Model<T extends object> {
-  private schema: z.ZodObject<any>;
+export class Model<T> {
   private model: T[];
   private logs: string[];
-  constructor(schema: z.ZodObject<any>) {
-    this.schema = schema;
+  private versions: T[][];
+  constructor() {
     this.model = [];
     this.logs = [];
+    this.versions = [[], []];
   }
   private createLog(data: LogMsg) {
-    const log = `|${data.date} | method use: ${data.method} | query: ${data.query} | changes: ${data.changes} | status: ${data.status}|`;
+    const log = `| ${data.date} | method use: ${data.method} | query: ${data.query} | changes: ${data.changes} | status: ${data.status}|`;
     this.logs.push(log);
   }
   readLogs() {
     return this.logs;
   }
-  private where(item: unknownObj, { where }: any) {
-    const testForEachParam = [];
+  getAll() {
+    return this.model;
+  }
+  getVersions() {
+    return this.versions;
+  }
+  createVersion() {
+    const h = structuredClone(this.model);
+    this.versions.push(h);
+    this.versions.shift();
+  }
+
+  private where(item: unknownObj, where: Query) {
     for (const queryFieldsIndex in where) {
       const value = where[queryFieldsIndex].value;
       const modifier = where[queryFieldsIndex].modifier;
@@ -35,26 +44,22 @@ export class Model<T extends object> {
 
       switch (modifier) {
         case Modifier.start:
-          testForEachParam.push(String(item[field]).startsWith(String(value)));
+          if (!String(item[field]).startsWith(String(value))) return false;
           continue;
         case Modifier.end:
-          testForEachParam.push(String(item[field]).endsWith(String(value)));
+          if (!String(item[field]).endsWith(String(value))) return false;
           continue;
         case Modifier.has:
-          testForEachParam.push(String(item[field]).includes(String(value)));
+          if (!String(item[field]).includes(String(value))) return false;
           continue;
         case Modifier.exclude:
-          testForEachParam.push(!String(item[field]).includes(String(value)));
+          if (String(item[field]).includes(String(value))) return false;
           continue;
         default:
-          if (item[field] == value) {
-            testForEachParam.push(true);
-            continue;
-          }
+          if (item[field] != value) return false;
       }
-      testForEachParam.push(false);
     }
-    return testForEachParam.every((filedlReturn) => filedlReturn == true);
+    return true;
   }
   private grouping(
     objectArray: unknownObj[],
@@ -96,54 +101,27 @@ export class Model<T extends object> {
 
   create(data: T): void {
     const date = new Date();
-    try {
-      ErrorHandling("create", "data", data, this.schema);
 
-      this.model.push(data);
+    this.createVersion();
+    this.model.push(data);
 
-      this.createLog({
-        date,
-        method: "create",
-        query: "",
-        status: "sucess",
-        changes: 1,
-      });
-    } catch (error: any) {
-      this.createLog({
-        date,
-        method: "create",
-        query: "",
-        status: "fail",
-        changes: 0,
-      });
-      console.error(error);
-    }
+    this.createLog({
+      date,
+      method: "create",
+      query: "",
+    });
   }
   createMany(data: T[]) {
     const date = new Date();
-    try {
-      data.forEach((n) => {
-        ErrorHandling("createMany", "data", n, this.schema);
 
-        this.model.push(n);
-      });
-      this.createLog({
-        date,
-        method: "createMany",
-        query: "",
-        status: "sucess",
-        changes: data.length,
-      });
-    } catch (error: any) {
-      this.createLog({
-        date,
-        method: "createMany",
-        query: "",
-        status: "fail",
-        changes: 0,
-      });
-      console.error(error);
-    }
+    data.forEach((n) => {
+      this.model.push(n);
+    });
+    this.createLog({
+      date,
+      method: "createMany",
+      query: "",
+    });
   }
   findFirst(data: Query): T | undefined {
     for (let index in this.model) {
@@ -165,151 +143,88 @@ export class Model<T extends object> {
     return filtered;
   }
   update(data: { where: Query; data: Partial<T> }) {
-    const partialUserSchema = this.schema.partial();
     const date = new Date();
 
-    try {
-      ErrorHandling("update", "data", data.data, partialUserSchema);
+    this.createVersion();
 
-      for (let index in this.model) {
-        if (this.where(this.model[index] as unknownObj, data)) {
-          const valuesParamenters = data.data;
+    for (let index in this.model) {
+      if (this.where(this.model[index] as unknownObj, data.where)) {
+        const valuesParamenters = data.data;
 
-          const updateKeys = Object.keys(valuesParamenters);
-          const updateValues = Object.values(valuesParamenters);
+        const updateKeys = Object.keys(valuesParamenters);
+        const updateValues = Object.values(valuesParamenters);
 
-          updateKeys.forEach((key, i) => {
-            //@ts-ignore
-            this.model[index][key] = updateValues[i];
-          });
+        updateKeys.forEach((key, i) => {
+          //@ts-ignore
+          this.model[index][key] = updateValues[i];
+        });
 
-          this.createLog({
-            date,
-            method: "update",
-            query: JSON.stringify(data.where),
-            status: "sucess",
-            changes: 1,
-          });
-          return;
-        }
+        this.createLog({
+          date,
+          method: "update",
+          query: JSON.stringify(data.where),
+        });
+        return;
       }
-
-      throw new Error("Query not found results");
-    } catch (error: any) {
-      this.createLog({
-        date,
-        method: "update",
-        query: JSON.stringify(data.where),
-        status: "fail",
-        changes: 0,
-      });
-
-      console.error(error);
     }
   }
   updateMany(data: { where: Query; data: Partial<T> }) {
-    const partialUserSchema = this.schema.partial();
     const date = new Date();
-    try {
-      ErrorHandling("update", "data", data.data, partialUserSchema);
 
-      let results = false;
-      let acc = 0;
-      for (let index in this.model) {
-        if (this.where(this.model[index] as unknownObj, data)) {
-          acc++;
-          results = true;
-          const valuesParamenters = data.data;
+    let results = false;
+    let acc = 0;
+    for (let index in this.model) {
+      if (this.where(this.model[index] as unknownObj, data.where)) {
+        acc++;
+        results = true;
+        const valuesParamenters = data.data;
 
-          const updateKeys = Object.keys(valuesParamenters);
-          const updateValues = Object.values(valuesParamenters);
+        const updateKeys = Object.keys(valuesParamenters);
+        const updateValues = Object.values(valuesParamenters);
 
-          updateKeys.forEach((key, i) => {
-            //@ts-ignore
-            this.model[index][key] = updateValues[i];
-          });
-        }
+        updateKeys.forEach((key, i) => {
+          //@ts-ignore
+          this.model[index][key] = updateValues[i];
+        });
       }
-      this.createLog({
-        date,
-        method: "updateMany",
-        query: JSON.stringify(data.where),
-        status: "sucess",
-        changes: acc,
-      });
-      if (!results) throw new Error("Query not found results");
-    } catch (error: any) {
-      this.createLog({
-        date,
-        method: "updateMany",
-        query: JSON.stringify(data.where),
-        status: "fail",
-        changes: 0,
-      });
-      console.error(error);
     }
+    this.createLog({
+      date,
+      method: "updateMany",
+      query: JSON.stringify(data.where),
+    });
   }
   delete(data: { where: Query }) {
     const date = new Date();
-    try {
-      for (let index in this.model) {
-        if (this.where(this.model[Number(index)] as unknownObj, data)) {
-          console.log(this.model.splice(Number(index), 1));
 
-          this.createLog({
-            date,
-            method: "delete",
-            query: JSON.stringify(data.where),
-            status: "sucess",
-            changes: 1,
-          });
-          return;
-        }
+    for (let index in this.model) {
+      if (this.where(this.model[Number(index)] as unknownObj, data.where)) {
+        console.log(this.model.splice(Number(index), 1));
+
+        this.createLog({
+          date,
+          method: "delete",
+          query: JSON.stringify(data.where),
+        });
+        return;
       }
-
-      throw new Error("Query not found results");
-    } catch (error: any) {
-      this.createLog({
-        date,
-        method: "delete",
-        query: JSON.stringify(data.where),
-        status: "fail",
-        changes: 0,
-      });
-
-      console.error(error);
     }
   }
   deleteMany(data: { where: Query }) {
     const date = new Date();
-    try {
-      let results = false;
-      let acc = 0;
-      for (let index in this.model) {
-        if (this.where(this.model[index] as unknownObj, data)) {
-          acc++;
-          results = true;
-          console.log(this.model.splice(Number(index), 1));
-        }
+
+    let acc = 0;
+    for (let index in this.model) {
+      if (this.where(this.model[index] as unknownObj, data.where)) {
+        acc++;
+        console.log(this.model.splice(Number(index), 1));
       }
-      this.createLog({
-        date,
-        method: "deleteMany",
-        query: JSON.stringify(data.where),
-        status: "sucess",
-        changes: acc,
-      });
-      if (!results) throw new Error("Query not found results");
-    } catch (error: any) {
-      this.createLog({
-        date,
-        method: "deleteMany",
-        query: JSON.stringify(data.where),
-        status: "fail",
-        changes: 0,
-      });
-      console.error(error);
     }
+    this.createLog({
+      date,
+      method: "deleteMany",
+      query: JSON.stringify(data.where),
+    });
   }
   groupBy(data: GroupBy) {
     const filtered = this.findMany(data.where) as unknownObj[];

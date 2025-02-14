@@ -6,8 +6,7 @@ export class Db {
   constructor() {
     this.model = {};
   }
-  CreateModel(name: string, schema: z.ZodObject<any>) {
-    type zt = z.infer<typeof schema>;
-    this.model[name] = new Model<zt>(schema);
+  CreateModel<T>(name: string) {
+    this.model[name] = new Model<T>();
   }
 }

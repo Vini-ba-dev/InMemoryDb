@@ -1,26 +1,11 @@
-import { Db } from "./Db";
-import { z } from "zod";
+import { UserSchema } from "./Mocks";
 import { users } from "./Mocks";
 import { Modifier } from "./types";
+import { Model } from "./Model";
 
-const UserSchema = z.object({
-  id: z.number().int(),
-  name: z.string().min(2),
-  age: z.number().int().min(18, { message: "Min. must be 18" }),
-  email: z.string().email({ message: "Should be a valid e-mail" }),
-  type: z.enum(["admin", "common"]),
-  country: z.string().min(2),
-  createdAt: z.string().datetime(),
-  updatedAt: z.string().datetime(),
-});
-
-const client = new Db();
-
-client.CreateModel("users", UserSchema);
-// users.forEach((user) => client.model.users.create(user));
-client.model.users.create(users[0]);
-client.model.users.createMany(users);
-client.model.users.deleteMany({
+const clientModel = new Model<UserSchema>();
+clientModel.create(users[0]);
+clientModel.update({
   where: [
     {
       field: "name",
@@ -28,7 +13,24 @@ client.model.users.deleteMany({
       modifier: Modifier.start,
     },
   ],
-  data: { age: 26, type: "common" },
+  data: {
+    age: 26,
+  },
 });
-const logs = client.model.users.readLogs();
-console.log(logs);
+clientModel.update({
+  where: [
+    {
+      field: "name",
+      value: "Al",
+      modifier: Modifier.start,
+    },
+  ],
+  data: {
+    age: 27,
+  },
+});
+
+const all = clientModel.getAll();
+console.log(all);
+const versions = clientModel.getVersions();
+console.log(versions);

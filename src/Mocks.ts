@@ -1,4 +1,16 @@
-export const users = [
+export interface UserSchema {
+  id: number;
+  name: string;
+  age: number;
+  email: string;
+  type: "admin" | "common";
+  subscriptionPrice: number;
+  country: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const users: UserSchema[] = [
   {
     id: 1,
     name: "Alice",
